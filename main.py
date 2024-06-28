@@ -115,7 +115,7 @@ async def r(ctx):
 
 
 async def random_message():
-    channel = client.get_channel(int(os.environ['skinwalkers_gen']))
+    channel = client.get_channel(int(os.environ['skinwalkers_general']))
     message = db.get_random_message()
 
     if message['embed'] != 'None':
