@@ -3,17 +3,21 @@ load_dotenv()
 
 
 import os
+import random
+import datetime
 
 
 import discord
 from discord.ext import commands, tasks
-import datetime
+
 
 from database import Database
+from counters import Counters
 
 intents = discord.Intents.all()
 client = commands.Bot(command_prefix="!", intents=intents)
 db = Database()
+counters = Counters()
 
 
 @client.event
@@ -33,7 +37,15 @@ async def on_message(message):
             await message.delete()
 
     if not author == 'sagginswaggin':
+        counters.respond_to_austin_counter = 0
         return
+
+    counters.respond_to_austin_counter += 1
+    if counters.respond_to_austin_counter >= 3:
+        channel = client.get_channel(message.channel.id)
+        random_messages = ['bro shutup', 'i do not care.', 'you type a lot', 'i was trying to ignore you', "You're so funny!"]
+        await channel.send(random.choice(random_messages))
+        counters.respond_to_austin_counter = 0
 
     guild = str(message.guild).replace(' ', '_')
     content = message.content
