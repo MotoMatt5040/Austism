@@ -22,6 +22,6 @@ pip install commitizen
 Dependencies:
 ```bash
 pip install discord.py
-pip install requirements.txt
+pip install -r requirements.txt
 ```
 
