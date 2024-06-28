@@ -26,10 +26,12 @@ async def on_ready():
 
 @client.event
 async def on_message(message):
-    if message.content.startswith("!"):
-        await client.process_commands(message)
-        await message.delete()
     author = str(message.author)
+    if message.content.startswith("!"):
+        if not author == 'sagginswaggin':
+            await client.process_commands(message)
+            await message.delete()
+
     if not author == 'sagginswaggin':
         return
 
@@ -87,7 +89,6 @@ async def on_message_edit(before, after):
 
 @tasks.loop(time=datetime.time(hour=2))  # 0 is 7pm central, so add 5 hours for your time for central time
 async def motd():
-    print('Running MOTD')
     channel = client.get_channel(int(os.environ['skinwalkers_gen']))
     message = db.get_random_message()
 
