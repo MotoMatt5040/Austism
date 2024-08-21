@@ -1,3 +1,4 @@
+
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -42,7 +43,8 @@ async def on_message(message):
     if counters.respond_to_austin_counter >= 3:
         channel = client.get_channel(message.channel.id)
         random_messages = ['bro shutup', 'i do not care.', 'you type a lot', 'i was trying to ignore you',
-                           "You're so funny!"]
+                           "You're so funny!", "please stop talking.", "bruh why do you always have something to say",
+                           "n", "please send more shit that i do not care about", "you done yet?"]
         await channel.send(random.choice(random_messages))
         counters.respond_to_austin_counter = 0
 
