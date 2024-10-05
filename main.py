@@ -44,9 +44,13 @@ async def on_message(message):
         channel = client.get_channel(message.channel.id)
         random_messages = ['bro shutup', 'i do not care.', 'you type a lot', 'i was trying to ignore you',
                            "You're so funny!", "please stop talking.", "bruh why do you always have something to say",
-                           "n", "please send more shit that i do not care about", "you done yet?"]
+                           "n", "please send more shit that i do not care about", "you done yet?",
+                           "AND THE CROWD GOES WILD!!!", "Do it again",
+                           "Keep it up and see how many more you can post before someone else replies", "thanks",
+                           "Stealing that", "Yup, those are all going in the database.", "Keep em coming",
+                           "Don't worry I got all night", "yup, tucking away for future use.",
+                           "good job", "good boy", "yeah post another one for me"]
         await channel.send(random.choice(random_messages))
-        counters.respond_to_austin_counter = 0
 
     guild = str(message.guild).replace(' ', '_')
     content = message.content
