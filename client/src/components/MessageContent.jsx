@@ -8,19 +8,16 @@ const VIDEO_EXT = /\.(mp4|mov|webm)/i;
 function LazyVideo({ messageId, channelId, fallbackUrl }) {
   const [src, setSrc] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(false);
 
   async function load() {
     if (src || loading) return;
     setLoading(true);
     try {
       const data = await refreshMessage(messageId, channelId);
-      // Find a video URL from the refreshed data
       const videoEmbed = data.embeds?.find((e) => e.type === 'video');
       const videoAttachment = data.attachments?.find((a) => a.contentType?.startsWith('video/'));
       setSrc(videoEmbed?.url || videoAttachment?.url || data.content?.replace(/\|\|/g, '') || fallbackUrl);
     } catch {
-      setError(true);
       setSrc(fallbackUrl);
     }
     setLoading(false);
@@ -28,13 +25,21 @@ function LazyVideo({ messageId, channelId, fallbackUrl }) {
 
   if (!src) {
     return (
-      <button className="load-video-btn" onClick={load} disabled={loading}>
-        {loading ? 'Loading...' : 'Load Video'}
-      </button>
+      <div className="video-thumbnail" onClick={load}>
+        <div className="video-play-overlay">
+          {loading ? (
+            <span className="video-loading">Loading...</span>
+          ) : (
+            <svg className="play-icon" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M8 5v14l11-7z" />
+            </svg>
+          )}
+        </div>
+      </div>
     );
   }
 
-  return <video src={src} controls preload="auto" />;
+  return <video src={src} controls autoPlay preload="auto" />;
 }
 
 export default function MessageContent({ content, messageId, channelId }) {

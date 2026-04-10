@@ -175,25 +175,46 @@ body {
   margin-bottom: 0.5rem;
 }
 
-.load-video-btn {
+.video-thumbnail {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  max-width: 500px;
   background: var(--surface-hover);
-  border: 1px solid var(--border);
-  color: var(--accent);
-  padding: 0.75rem 1.5rem;
-  border-radius: var(--radius);
+  border-radius: 8px;
   cursor: pointer;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+}
+
+.video-thumbnail:hover {
+  background: var(--border);
+}
+
+.video-thumbnail:hover .play-icon {
+  transform: scale(1.15);
+}
+
+.video-play-overlay {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.play-icon {
+  width: 60px;
+  height: 60px;
+  color: var(--accent);
+  filter: drop-shadow(0 2px 8px rgba(0,0,0,0.4));
+  transition: transform 0.2s;
+}
+
+.video-loading {
+  color: var(--text-muted);
   font-size: 0.9rem;
-  transition: all 0.2s;
-}
-
-.load-video-btn:hover:not(:disabled) {
-  background: var(--accent-glow);
-  border-color: var(--accent);
-}
-
-.load-video-btn:disabled {
-  opacity: 0.5;
-  cursor: wait;
 }
 
 .message-media {
