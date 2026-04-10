@@ -354,6 +354,73 @@ body {
   font-style: italic;
 }
 
+/* ---- Feed Snap Scroll ---- */
+.feed-mode .wall-controls {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: var(--bg);
+  padding-bottom: 1rem;
+}
+
+.feed-snap-container {
+  scroll-snap-type: y mandatory;
+  overflow-y: auto;
+  height: calc(100vh - 160px);
+  scroll-behavior: smooth;
+}
+
+.feed-snap-card {
+  scroll-snap-align: start;
+  min-height: calc(100vh - 160px);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 2rem 1rem;
+  border-bottom: 1px solid var(--border);
+  position: relative;
+}
+
+.feed-snap-content {
+  max-width: 600px;
+  width: 100%;
+  text-align: center;
+}
+
+.feed-snap-content .message-content {
+  font-size: 1.25rem;
+  line-height: 1.6;
+}
+
+.feed-snap-content .message-media {
+  margin: 1rem auto;
+  display: flex;
+  justify-content: center;
+}
+
+.feed-snap-content .message-media img,
+.feed-snap-content .message-media video {
+  max-height: 60vh;
+}
+
+.feed-snap-content .video-thumbnail {
+  max-width: 100%;
+}
+
+.feed-snap-date {
+  position: absolute;
+  bottom: 1.5rem;
+  color: var(--text-muted);
+  font-size: 0.75rem;
+}
+
+.feed-snap-loader {
+  min-height: 100px;
+  font-style: italic;
+  color: var(--text-muted);
+}
+
 /* ---- Quote Generator ---- */
 .quote-page {
   display: flex;

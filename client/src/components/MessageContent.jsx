@@ -7,9 +7,9 @@ const VIDEO_EXT = /\.(mp4|mov|webm)/i;
 const YOUTUBE_REGEX = /https:\/\/(?:www\.)?(?:youtube\.com\/(?:watch\?v=|shorts\/)|youtu\.be\/)([\w-]+)/;
 const DISCORD_CDN = /(?:cdn|media)\.discordapp\.(com|net)/;
 
-function LazyVideo({ messageId, channelId, fallbackUrl }) {
+function LazyVideo({ messageId, channelId, fallbackUrl, autoPlay = false }) {
   const [src, setSrc] = useState(null);
-  const [showPlayer, setShowPlayer] = useState(false);
+  const [showPlayer, setShowPlayer] = useState(autoPlay);
   const [error, setError] = useState(false);
 
   useEffect(() => {
@@ -27,8 +27,8 @@ function LazyVideo({ messageId, channelId, fallbackUrl }) {
     return <p className="message-content video-unavailable">Video unavailable</p>;
   }
 
-  if (showPlayer && src) {
-    return <video src={src} controls autoPlay preload="auto" onError={() => setError(true)} />;
+  if ((showPlayer || autoPlay) && src) {
+    return <video src={src} controls autoPlay muted loop preload="auto" onError={() => setError(true)} />;
   }
 
   return (
@@ -119,7 +119,7 @@ function GenericEmbed({ messageId, channelId, url }) {
   return <a href={url} target="_blank" rel="noopener noreferrer" className="message-link">{url}</a>;
 }
 
-export default function MessageContent({ content, messageId, channelId }) {
+export default function MessageContent({ content, messageId, channelId, autoPlay = false }) {
   if (!content) return null;
 
   const cleaned = content.replace(/\|\|/g, '');
@@ -164,7 +164,7 @@ export default function MessageContent({ content, messageId, channelId }) {
         if (VIDEO_EXT.test(cleanUrl) && DISCORD_CDN.test(url)) {
           return (
             <div key={i} className="message-media">
-              <LazyVideo messageId={messageId} channelId={channelId} fallbackUrl={url} />
+              <LazyVideo messageId={messageId} channelId={channelId} fallbackUrl={url} autoPlay={autoPlay} />
             </div>
           );
         }

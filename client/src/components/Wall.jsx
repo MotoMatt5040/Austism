@@ -27,6 +27,25 @@ function AttachmentLoader({ messageId, channelId }) {
   ));
 }
 
+function MessageCard({ msg, isFeed }) {
+  return (
+    <div className={isFeed ? 'feed-snap-card' : 'message-card'}>
+      <div className={isFeed ? 'feed-snap-content' : ''}>
+        <MessageContent content={msg.content} messageId={msg.message_id} channelId={msg.channel_id} autoPlay={isFeed} />
+        {msg.has_attachment > 0 && (
+          <AttachmentLoader messageId={msg.message_id} channelId={msg.channel_id} />
+        )}
+      </div>
+      <span className={isFeed ? 'feed-snap-date' : 'message-date'}>
+        {new Date(msg.rec_date).toLocaleDateString('en-US', {
+          year: 'numeric', month: 'short', day: 'numeric',
+          hour: '2-digit', minute: '2-digit',
+        })}
+      </span>
+    </div>
+  );
+}
+
 export default function Wall() {
   const [messages, setMessages] = useState([]);
   const [page, setPage] = useState(1);
@@ -34,21 +53,21 @@ export default function Wall() {
   const [order, setOrder] = useState('desc');
   const [loading, setLoading] = useState(false);
   const loaderRef = useRef(null);
+  const isFeed = order === 'random';
 
   const load = useCallback(async (pageNum, reset = false) => {
     if (loading) return;
     setLoading(true);
     try {
-      const data = await fetchMessages(pageNum, 10, order);
+      const data = await fetchMessages(pageNum, isFeed ? 5 : 10, order);
       setMessages((prev) => reset ? data.messages : [...prev, ...data.messages]);
       setHasMore(pageNum < data.totalPages);
     } catch (e) {
       console.error(e);
     }
     setLoading(false);
-  }, [order, loading]);
+  }, [order, loading, isFeed]);
 
-  // Initial load and when order changes
   useEffect(() => {
     setMessages([]);
     setPage(1);
@@ -56,7 +75,6 @@ export default function Wall() {
     load(1, true);
   }, [order]);
 
-  // Infinite scroll observer
   useEffect(() => {
     if (!loaderRef.current) return;
     const observer = new IntersectionObserver(
@@ -81,7 +99,7 @@ export default function Wall() {
   }
 
   return (
-    <div className="wall">
+    <div className={isFeed ? 'wall feed-mode' : 'wall'}>
       <div className="wall-controls">
         <h2>Wall of Austin</h2>
         <div className="order-toggle">
@@ -97,27 +115,28 @@ export default function Wall() {
         </div>
       </div>
 
-      <div className="message-list">
-        {messages.map((msg) => (
-          <div key={msg.id} className="message-card">
-            <MessageContent content={msg.content} messageId={msg.message_id} channelId={msg.channel_id} />
-            {msg.has_attachment > 0 && (
-              <AttachmentLoader messageId={msg.message_id} channelId={msg.channel_id} />
-            )}
-            <span className="message-date">
-              {new Date(msg.rec_date).toLocaleDateString('en-US', {
-                year: 'numeric', month: 'short', day: 'numeric',
-                hour: '2-digit', minute: '2-digit',
-              })}
-            </span>
+      {isFeed ? (
+        <div className="feed-snap-container">
+          {messages.map((msg, idx) => (
+            <MessageCard key={`${msg.id}-${idx}`} msg={msg} isFeed />
+          ))}
+          <div ref={loaderRef} className="feed-snap-card feed-snap-loader">
+            {loading && <span>Loading...</span>}
           </div>
-        ))}
-      </div>
-
-      <div ref={loaderRef} className="scroll-loader">
-        {loading && <span>Loading more...</span>}
-        {!hasMore && messages.length > 0 && <span>That's all of Austin's wisdom.</span>}
-      </div>
+        </div>
+      ) : (
+        <>
+          <div className="message-list">
+            {messages.map((msg) => (
+              <MessageCard key={msg.id} msg={msg} isFeed={false} />
+            ))}
+          </div>
+          <div ref={loaderRef} className="scroll-loader">
+            {loading && <span>Loading more...</span>}
+            {!hasMore && messages.length > 0 && <span>That's all of Austin's wisdom.</span>}
+          </div>
+        </>
+      )}
     </div>
   );
 }
