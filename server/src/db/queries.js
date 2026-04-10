@@ -1,10 +1,14 @@
 import db from './database.js';
 
-export function insertMessage(messageId, content, recDate, attachment, embed, isEdit = 0) {
+export function insertMessage(messageId, content, recDate, hasAttachment, embed, isEdit = 0, channelId = null) {
   return db.prepare(`
-    INSERT INTO messages (message_id, content, rec_date, attachment, embed, is_edit)
-    VALUES (?, ?, ?, ?, ?, ?)
-  `).run(messageId, content, recDate, attachment, embed, isEdit);
+    INSERT INTO messages (message_id, content, rec_date, has_attachment, embed, is_edit, channel_id)
+    VALUES (?, ?, ?, ?, ?, ?, ?)
+  `).run(messageId, content, recDate, hasAttachment, embed, isEdit, channelId);
+}
+
+export function getMessageById(messageId) {
+  return db.prepare('SELECT * FROM messages WHERE message_id = ? LIMIT 1').get(messageId);
 }
 
 export function getRandomMessage() {

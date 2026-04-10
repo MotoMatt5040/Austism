@@ -26,9 +26,20 @@ export default function QuoteGenerator() {
       <div className={`quote-display ${fading ? 'fade-out' : 'fade-in'}`}>
         {quote && (
           <>
-            <blockquote className="quote-text">
-              "{quote.content || '[attachment only]'}"
-            </blockquote>
+            {quote.content && (
+              <blockquote className="quote-text">
+                "{quote.content}"
+              </blockquote>
+            )}
+            {quote.attachments?.map((att, i) => (
+              <div key={i} className="quote-media">
+                {att.contentType?.startsWith('image/') ? (
+                  <img src={att.url} alt={att.name} />
+                ) : att.contentType?.startsWith('video/') ? (
+                  <video src={att.url} controls preload="metadata" />
+                ) : null}
+              </div>
+            ))}
             <cite className="quote-attribution">
               &mdash; Austin, {new Date(quote.rec_date).toLocaleDateString('en-US', {
                 year: 'numeric', month: 'long', day: 'numeric',

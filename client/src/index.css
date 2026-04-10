@@ -175,6 +175,30 @@ body {
   margin-bottom: 0.5rem;
 }
 
+.message-media {
+  margin: 0.5rem 0;
+}
+
+.message-media img,
+.message-media video {
+  max-width: 100%;
+  max-height: 400px;
+  border-radius: 8px;
+  object-fit: contain;
+}
+
+.quote-media {
+  margin: 1rem 0;
+}
+
+.quote-media img,
+.quote-media video {
+  max-width: 100%;
+  max-height: 500px;
+  border-radius: 8px;
+  object-fit: contain;
+}
+
 .message-date {
   display: block;
   color: var(--text-muted);

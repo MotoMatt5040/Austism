@@ -7,15 +7,16 @@ client.on('messageUpdate', async (_before, after) => {
   if (!after.author || after.author.bot) return;
   if (after.author.username !== TARGET_USER) return;
 
-  const attachment = after.attachments.first()?.url || null;
+  const hasAttachment = after.attachments.size > 0 ? 1 : 0;
   const embed = after.embeds[0]?.url || null;
 
   insertMessage(
     String(after.id),
     after.content || null,
     after.createdAt.toISOString(),
-    attachment,
+    hasAttachment,
     embed,
-    1, // is_edit
+    1,
+    String(after.channel.id),
   );
 });

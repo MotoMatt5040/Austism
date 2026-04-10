@@ -11,18 +11,29 @@ db.pragma('foreign_keys = ON');
 
 db.exec(`
   CREATE TABLE IF NOT EXISTS messages (
-    id          INTEGER PRIMARY KEY AUTOINCREMENT,
-    message_id  TEXT NOT NULL,
-    content     TEXT,
-    rec_date    TEXT NOT NULL,
-    attachment  TEXT,
-    embed       TEXT,
-    is_edit     INTEGER DEFAULT 0,
-    created_at  TEXT DEFAULT (datetime('now'))
+    id            INTEGER PRIMARY KEY AUTOINCREMENT,
+    message_id    TEXT NOT NULL,
+    content       TEXT,
+    rec_date      TEXT NOT NULL,
+    has_attachment INTEGER DEFAULT 0,
+    embed         TEXT,
+    is_edit       INTEGER DEFAULT 0,
+    channel_id    TEXT,
+    created_at    TEXT DEFAULT (datetime('now'))
   );
   CREATE INDEX IF NOT EXISTS idx_messages_rec_date ON messages(rec_date);
   CREATE INDEX IF NOT EXISTS idx_messages_message_id ON messages(message_id);
 `);
+
+// Add channel_id column if upgrading from old schema
+try {
+  db.exec('ALTER TABLE messages ADD COLUMN channel_id TEXT');
+} catch (e) { /* column already exists */ }
+
+// Rename attachment to has_attachment if upgrading
+try {
+  db.exec('ALTER TABLE messages RENAME COLUMN attachment TO has_attachment');
+} catch (e) { /* already renamed or doesn't exist */ }
 
 // Migrate legacy data from tblSkin_Walkers if it exists and messages table is empty
 try {

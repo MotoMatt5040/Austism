@@ -45,12 +45,18 @@ export default function Wall() {
         <div className="message-list">
           {messages.map((msg) => (
             <div key={msg.id} className="message-card">
-              <p className="message-content">{msg.content || '[attachment]'}</p>
-              {msg.attachment && (
-                <a href={msg.attachment} target="_blank" rel="noopener noreferrer" className="message-attachment">
-                  Attachment
-                </a>
-              )}
+              {msg.content && <p className="message-content">{msg.content}</p>}
+              {msg.attachments?.map((att, i) => (
+                <div key={i} className="message-media">
+                  {att.contentType?.startsWith('image/') ? (
+                    <img src={att.url} alt={att.name} loading="lazy" />
+                  ) : att.contentType?.startsWith('video/') ? (
+                    <video src={att.url} controls preload="metadata" />
+                  ) : (
+                    <a href={att.url} target="_blank" rel="noopener noreferrer">{att.name}</a>
+                  )}
+                </div>
+              ))}
               <span className="message-date">
                 {new Date(msg.rec_date).toLocaleDateString('en-US', {
                   year: 'numeric', month: 'short', day: 'numeric',

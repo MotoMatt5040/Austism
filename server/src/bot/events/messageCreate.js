@@ -66,15 +66,17 @@ client.on('messageCreate', async (message) => {
   }
 
   // Store message
-  const attachment = message.attachments.first()?.url || null;
+  const hasAttachment = message.attachments.size > 0 ? 1 : 0;
   const embed = message.embeds[0]?.url || null;
 
   insertMessage(
     String(message.id),
     message.content || null,
     message.createdAt.toISOString(),
-    attachment,
+    hasAttachment,
     embed,
+    0,
+    String(message.channel.id),
   );
 });
 
