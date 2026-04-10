@@ -641,40 +641,47 @@ body {
   letter-spacing: 1px;
 }
 
-.bubble-container {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  align-items: center;
-  gap: 0.4rem;
-  padding: 1rem;
+.bubble-svg {
+  display: block;
+  margin: 0 auto;
 }
 
-.bubble {
-  border-radius: 50%;
-  background: var(--accent-glow);
-  border: 1px solid var(--accent);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: default;
-  transition: transform 0.2s, background 0.2s;
-  overflow: hidden;
-}
-
-.bubble:hover {
-  transform: scale(1.1);
-  background: rgba(124, 92, 255, 0.3);
-  opacity: 1 !important;
-}
-
-.bubble-text {
-  font-family: 'Space Mono', monospace;
-  color: var(--text);
+.bubble-tooltip-wrapper {
+  height: 1.5rem;
   text-align: center;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  padding: 4px;
+  margin-bottom: 0.5rem;
+}
+
+.bubble-tooltip {
+  font-family: 'Space Mono', monospace;
+  font-size: 0.85rem;
+  color: var(--text);
+}
+
+.bubble-group {
+  cursor: default;
+  transition: opacity 0.15s;
+}
+
+.bubble-group.bubble-dimmed {
+  opacity: 0.3;
+}
+
+.bubble-circle {
+  fill: var(--accent-glow);
+  stroke: var(--accent);
+  stroke-width: 1;
+  transition: fill 0.15s;
+}
+
+.bubble-group:hover .bubble-circle {
+  fill: rgba(124, 92, 255, 0.35);
+}
+
+.bubble-label {
+  fill: var(--text);
+  font-family: 'Space Mono', monospace;
+  pointer-events: none;
 }
 
 /* ---- Soundboard ---- */

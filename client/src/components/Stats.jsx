@@ -1,5 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { fetchOverview, fetchHourly, fetchWords } from '../api/client.js';
+import { pack, hierarchy } from 'd3-hierarchy';
 
 function HourlyChart({ data }) {
   const max = Math.max(...data.map((d) => d.count), 1);
@@ -37,35 +38,65 @@ function HourlyChart({ data }) {
 }
 
 function WordBubbles({ words }) {
+  const containerRef = useRef(null);
+  const [size, setSize] = useState(500);
+  const [hovered, setHovered] = useState(null);
+
+  useEffect(() => {
+    if (!containerRef.current) return;
+    const w = containerRef.current.clientWidth;
+    setSize(Math.min(w, 600));
+    const onResize = () => setSize(Math.min(containerRef.current.clientWidth, 600));
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
+
   if (words.length === 0) return null;
 
-  const max = Math.max(...words.map((w) => w.value), 1);
-  const shuffled = [...words].sort(() => Math.random() - 0.5);
+  const root = hierarchy({ children: words })
+    .sum((d) => d.value)
+    .sort((a, b) => b.value - a.value);
+
+  const packed = pack()
+    .size([size, size])
+    .padding(3)(root);
+
+  const leaves = packed.leaves();
 
   return (
-    <div className="word-cloud">
+    <div className="word-cloud" ref={containerRef}>
       <h3>Austin's Vocabulary</h3>
-      <div className="bubble-container">
-        {shuffled.map((w) => {
-          const t = w.value / max;
-          const size = 40 + t * 100;
-          return (
-            <div
-              key={w.text}
-              className="bubble"
-              style={{
-                width: `${size}px`,
-                height: `${size}px`,
-                fontSize: `${Math.max(0.55, t * 1.1)}rem`,
-                opacity: 0.5 + t * 0.5,
-              }}
-              title={`${w.text}: ${w.value}`}
-            >
-              <span className="bubble-text">{w.text}</span>
-            </div>
-          );
-        })}
+      <div className="bubble-tooltip-wrapper">
+        {hovered && (
+          <span className="bubble-tooltip">{hovered.data.text}: {hovered.data.value}</span>
+        )}
       </div>
+      <svg width={size} height={size} className="bubble-svg">
+        {leaves.map((leaf) => (
+          <g
+            key={leaf.data.text}
+            transform={`translate(${leaf.x},${leaf.y})`}
+            onMouseEnter={() => setHovered(leaf)}
+            onMouseLeave={() => setHovered(null)}
+            className={`bubble-group ${hovered && hovered.data.text !== leaf.data.text ? 'bubble-dimmed' : ''}`}
+          >
+            <circle
+              r={leaf.r}
+              className="bubble-circle"
+            />
+            {leaf.r > 18 && (
+              <text
+                className="bubble-label"
+                textAnchor="middle"
+                dy="0.35em"
+                fontSize={Math.min(leaf.r * 0.45, 14)}
+              >
+                {leaf.data.text}
+              </text>
+            )}
+          </g>
+        ))}
+      </svg>
     </div>
   );
 }
