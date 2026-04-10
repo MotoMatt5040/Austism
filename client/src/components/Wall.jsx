@@ -55,18 +55,22 @@ export default function Wall() {
   const loaderRef = useRef(null);
   const isFeed = order === 'random';
 
+  const loadRef = useRef(false);
+
   const load = useCallback(async (pageNum, reset = false) => {
-    if (loading) return;
+    if (loadRef.current) return;
+    loadRef.current = true;
     setLoading(true);
     try {
-      const data = await fetchMessages(pageNum, isFeed ? 5 : 10, order);
+      const data = await fetchMessages(pageNum, isFeed ? 1 : 10, order);
       setMessages((prev) => reset ? data.messages : [...prev, ...data.messages]);
-      setHasMore(pageNum < data.totalPages);
+      setHasMore(data.messages.length > 0);
     } catch (e) {
       console.error(e);
     }
     setLoading(false);
-  }, [order, loading, isFeed]);
+    loadRef.current = false;
+  }, [order, isFeed]);
 
   useEffect(() => {
     setMessages([]);
@@ -75,11 +79,13 @@ export default function Wall() {
     load(1, true);
   }, [order]);
 
+  // For non-feed: standard infinite scroll
+  // For feed: observe last card to load the next one
   useEffect(() => {
     if (!loaderRef.current) return;
     const observer = new IntersectionObserver(
       (entries) => {
-        if (entries[0].isIntersecting && hasMore && !loading) {
+        if (entries[0].isIntersecting && hasMore && !loadRef.current) {
           setPage((p) => {
             const next = p + 1;
             load(next);
@@ -87,11 +93,21 @@ export default function Wall() {
           });
         }
       },
-      { threshold: 0.1 }
+      { threshold: 0.5 }
     );
     observer.observe(loaderRef.current);
     return () => observer.disconnect();
-  }, [hasMore, loading]);
+  }, [hasMore, messages.length]);
+
+  // Lock body scroll in feed mode
+  useEffect(() => {
+    if (isFeed) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => { document.body.style.overflow = ''; };
+  }, [isFeed]);
 
   function changeOrder(newOrder) {
     if (newOrder === order) return;
@@ -118,11 +134,13 @@ export default function Wall() {
       {isFeed ? (
         <div className="feed-snap-container">
           {messages.map((msg, idx) => (
-            <MessageCard key={`${msg.id}-${idx}`} msg={msg} isFeed />
+            <div
+              key={`${msg.id}-${idx}`}
+              ref={idx === messages.length - 1 ? loaderRef : null}
+            >
+              <MessageCard msg={msg} isFeed />
+            </div>
           ))}
-          <div ref={loaderRef} className="feed-snap-card feed-snap-loader">
-            {loading && <span>Loading...</span>}
-          </div>
         </div>
       ) : (
         <>

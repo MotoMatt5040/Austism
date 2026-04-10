@@ -374,13 +374,15 @@ body {
 .feed-snap-container {
   flex: 1;
   overflow-y: scroll;
+  overflow-x: hidden;
   scroll-snap-type: y mandatory;
-  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
 }
 
 .feed-snap-card {
-  scroll-snap-align: start;
-  height: calc(100vh - 80px);
+  scroll-snap-align: center;
+  scroll-snap-stop: always;
+  height: calc(100dvh - 80px);
   display: flex;
   flex-direction: column;
   justify-content: center;
