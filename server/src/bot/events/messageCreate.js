@@ -52,11 +52,11 @@ client.on('messageCreate', async (message) => {
     if (message.content === '!r') {
       await sendRandomMessage(message.channel);
     } else if (message.content === '!backfill') {
-      await message.channel.send('Starting backfill for the past year...');
+      console.log('Backfill started via command');
       backfill(message.guild).then((count) => {
-        message.channel.send(`Backfill complete. Added ${count} messages.`);
+        console.log(`Backfill complete. Added ${count} messages.`);
       }).catch((err) => {
-        message.channel.send(`Backfill failed: ${err.message}`);
+        console.error(`Backfill failed: ${err.message}`);
       });
     }
     await message.delete().catch(() => {});
