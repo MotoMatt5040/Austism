@@ -105,6 +105,29 @@ function FeedView({ messages, loading, onLoadMore, onDirectionChange }) {
     });
   }, [activeIdx]);
 
+  // Pause all videos when tab/window loses focus
+  useEffect(() => {
+    function onVisibility() {
+      const container = containerRef.current;
+      if (!container) return;
+      const videos = container.querySelectorAll('video');
+      if (document.hidden) {
+        videos.forEach((v) => v.pause());
+      } else {
+        // Resume only the active card
+        const cards = container.querySelectorAll('.feed-card');
+        cards.forEach((card, idx) => {
+          card.querySelectorAll('video').forEach((v) => {
+            if (idx === activeIdx) v.play().catch(() => {});
+          });
+        });
+      }
+    }
+
+    document.addEventListener('visibilitychange', onVisibility);
+    return () => document.removeEventListener('visibilitychange', onVisibility);
+  }, [activeIdx]);
+
   return (
     <div className="feed-container" ref={containerRef}>
       {messages.map((msg, idx) => (
