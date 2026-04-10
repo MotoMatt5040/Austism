@@ -24,22 +24,35 @@ function HourlyChart({ data }) {
 
 function WordCloud({ words }) {
   const max = Math.max(...words.map((w) => w.value), 1);
+  const min = Math.min(...words.map((w) => w.value), 1);
+  // Shuffle so it doesn't look sorted
+  const shuffled = [...words].sort(() => Math.random() - 0.5);
+  // Use log scale for better distribution
+  const logMax = Math.log(max + 1);
+  const logMin = Math.log(min + 1);
+  const range = logMax - logMin || 1;
+
   return (
     <div className="word-cloud">
       <h3>Austin's Vocabulary</h3>
       <div className="cloud-words">
-        {words.map((w) => (
-          <span
-            key={w.text}
-            className="cloud-word"
-            style={{
-              fontSize: `${Math.max(0.7, (w.value / max) * 2.5)}rem`,
-              opacity: 0.4 + (w.value / max) * 0.6,
-            }}
-          >
-            {w.text}
-          </span>
-        ))}
+        {shuffled.map((w) => {
+          const t = (Math.log(w.value + 1) - logMin) / range;
+          return (
+            <span
+              key={w.text}
+              className="cloud-word"
+              style={{
+                fontSize: `${0.6 + t * 3}rem`,
+                opacity: 0.35 + t * 0.65,
+                fontWeight: t > 0.6 ? 700 : 400,
+              }}
+              title={`${w.text}: ${w.value}`}
+            >
+              {w.text}
+            </span>
+          );
+        })}
       </div>
     </div>
   );

@@ -448,8 +448,10 @@ body {
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
-  gap: 0.5rem 1rem;
-  line-height: 1.8;
+  align-items: center;
+  gap: 0.4rem 0.8rem;
+  line-height: 1.2;
+  padding: 1rem;
 }
 
 .cloud-word {
