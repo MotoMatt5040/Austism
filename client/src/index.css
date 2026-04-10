@@ -375,6 +375,18 @@ body {
   overflow-y: scroll;
   scroll-snap-type: y mandatory;
   overscroll-behavior-y: contain;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+.feed-container::-webkit-scrollbar {
+  display: none;
+}
+
+@supports (scroll-snap-type: y proximity) {
+  .feed-container {
+    scroll-snap-type: y mandatory;
+  }
 }
 
 .feed-card {

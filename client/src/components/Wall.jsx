@@ -56,22 +56,27 @@ function ListView({ messages, loading, hasMore, loaderRef }) {
 
 function FeedView({ messages, loading, onLoadMore }) {
   const containerRef = useRef(null);
+  const [current, setCurrent] = useState(0);
 
+  // Track current card and load more near the end
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
 
     function onScroll() {
-      const { scrollTop, scrollHeight, clientHeight } = container;
-      // Load more when within 2 screens of the bottom
-      if (scrollHeight - scrollTop - clientHeight < clientHeight * 2) {
+      const cardHeight = container.clientHeight;
+      const idx = Math.round(container.scrollTop / cardHeight);
+      setCurrent(idx);
+
+      // Load more when 2 cards from the end
+      if (idx >= messages.length - 3) {
         onLoadMore();
       }
     }
 
     container.addEventListener('scroll', onScroll, { passive: true });
     return () => container.removeEventListener('scroll', onScroll);
-  }, [onLoadMore]);
+  }, [onLoadMore, messages.length]);
 
   return (
     <div className="feed-container" ref={containerRef}>
