@@ -4,7 +4,7 @@ import client from '../../bot/client.js';
 
 const router = Router();
 
-router.get('/', async (req, res) => {
+router.get('/', (req, res) => {
   const page = Math.max(1, parseInt(req.query.page) || 1);
   const pageSize = Math.min(100, Math.max(1, parseInt(req.query.pageSize) || 50));
   const order = ['asc', 'desc', 'random'].includes(req.query.order) ? req.query.order : 'desc';
@@ -12,10 +12,8 @@ router.get('/', async (req, res) => {
   const messages = getMessages(page, pageSize, order);
   const total = getMessageCount();
 
-  const enriched = await Promise.all(messages.map(enrichWithAttachments));
-
   res.json({
-    messages: enriched,
+    messages,
     page,
     pageSize,
     total,
@@ -23,31 +21,35 @@ router.get('/', async (req, res) => {
   });
 });
 
-router.get('/random', async (_req, res) => {
+router.get('/random', (_req, res) => {
   const message = getRandomMessage();
   if (!message) return res.status(404).json({ error: 'No messages found' });
-  res.json(await enrichWithAttachments(message));
+  res.json(message);
 });
 
 router.get('/count', (_req, res) => {
   res.json({ count: getMessageCount() });
 });
 
-async function enrichWithAttachments(msg) {
-  if (!msg.has_attachment || !msg.channel_id) return { ...msg, attachments: [] };
+// Fetch fresh attachment URLs on demand for a single message
+router.get('/:messageId/attachments', async (req, res) => {
+  const { messageId } = req.params;
+  const channelId = req.query.channelId;
+
+  if (!channelId) return res.json([]);
 
   try {
-    const channel = await client.channels.fetch(msg.channel_id);
-    const discordMsg = await channel.messages.fetch(msg.message_id);
-    const attachments = discordMsg.attachments.map((a) => ({
+    const channel = await client.channels.fetch(channelId);
+    const msg = await channel.messages.fetch(messageId);
+    const attachments = msg.attachments.map((a) => ({
       url: a.url,
       name: a.name,
       contentType: a.contentType,
     }));
-    return { ...msg, attachments };
+    res.json(attachments);
   } catch {
-    return { ...msg, attachments: [] };
+    res.json([]);
   }
-}
+});
 
 export default router;

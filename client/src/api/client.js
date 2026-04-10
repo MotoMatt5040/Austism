@@ -29,3 +29,7 @@ export function fetchHourly() {
 export function fetchWords(limit = 100) {
   return fetchJSON(`/stats/words?limit=${limit}`);
 }
+
+export function fetchAttachments(messageId, channelId) {
+  return fetchJSON(`/messages/${messageId}/attachments?channelId=${channelId}`);
+}
