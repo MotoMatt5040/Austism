@@ -637,26 +637,40 @@ body {
   letter-spacing: 1px;
 }
 
-.cloud-words {
+.bubble-container {
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
   align-items: center;
-  gap: 0.4rem 0.8rem;
-  line-height: 1.2;
+  gap: 0.4rem;
   padding: 1rem;
 }
 
-.cloud-word {
-  font-family: 'Space Mono', monospace;
-  color: var(--accent);
+.bubble {
+  border-radius: 50%;
+  background: var(--accent-glow);
+  border: 1px solid var(--accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
   cursor: default;
-  transition: opacity 0.2s;
+  transition: transform 0.2s, background 0.2s;
+  overflow: hidden;
 }
 
-.cloud-word:hover {
+.bubble:hover {
+  transform: scale(1.1);
+  background: rgba(124, 92, 255, 0.3);
   opacity: 1 !important;
-  color: var(--accent-hover);
+}
+
+.bubble-text {
+  font-family: 'Space Mono', monospace;
+  color: var(--text);
+  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding: 4px;
 }
 
 /* ---- Soundboard ---- */

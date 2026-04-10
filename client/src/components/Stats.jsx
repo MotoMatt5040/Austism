@@ -34,34 +34,33 @@ function HourlyChart({ data }) {
   );
 }
 
-function WordCloud({ words }) {
+function WordBubbles({ words }) {
   if (words.length === 0) return null;
 
   const max = Math.max(...words.map((w) => w.value), 1);
-  const min = Math.min(...words.map((w) => w.value), 1);
-  // Shuffle for display so it looks like a cloud
   const shuffled = [...words].sort(() => Math.random() - 0.5);
 
   return (
     <div className="word-cloud">
       <h3>Austin's Vocabulary</h3>
-      <div className="cloud-words">
+      <div className="bubble-container">
         {shuffled.map((w) => {
-          // Direct proportion to max value — 179 count is huge, 11 count is small
           const t = w.value / max;
+          const size = 40 + t * 100;
           return (
-          <span
-            key={w.text}
-            className="cloud-word"
-            style={{
-              fontSize: `${0.5 + t * 3.5}rem`,
-              opacity: 0.3 + t * 0.7,
-              fontWeight: t > 0.3 ? 700 : 400,
-            }}
-            title={`${w.text}: ${w.value}`}
-          >
-            {w.text}
-          </span>
+            <div
+              key={w.text}
+              className="bubble"
+              style={{
+                width: `${size}px`,
+                height: `${size}px`,
+                fontSize: `${Math.max(0.55, t * 1.1)}rem`,
+                opacity: 0.5 + t * 0.5,
+              }}
+              title={`${w.text}: ${w.value}`}
+            >
+              <span className="bubble-text">{w.text}</span>
+            </div>
           );
         })}
       </div>
@@ -111,7 +110,7 @@ export default function Stats() {
       </div>
 
       {hourly.length > 0 && <HourlyChart data={hourly} />}
-      {words.length > 0 && <WordCloud words={words} />}
+      {words.length > 0 && <WordBubbles words={words} />}
     </div>
   );
 }
