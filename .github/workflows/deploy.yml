@@ -28,18 +28,18 @@ jobs:
           NODE_ENV=production
           EOF
 
-      - name: Install server dependencies
-        run: cd server && npm install
-
-      - name: Install client dependencies and build
-        run: cd client && npm install && npm run build
-
-      - name: Deploy files
+      - name: Deploy source files
         run: |
           rsync -a --delete server/src/ /opt/austism/server/src/
-          rsync -a --delete server/node_modules/ /opt/austism/server/node_modules/
           cp server/package.json /opt/austism/server/
-          rsync -a --delete client/dist/ /opt/austism/client/dist/
+
+      - name: Install server dependencies
+        run: cd /opt/austism/server && npm install --omit=dev
+
+      - name: Build and deploy client
+        run: |
+          cd client && npm install && npm run build
+          rsync -a --delete dist/ /opt/austism/client/dist/
 
       - name: Deploy Caddyfile
         run: sudo cp Caddyfile /etc/caddy/Caddyfile
