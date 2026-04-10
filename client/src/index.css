@@ -54,13 +54,16 @@ body {
 
 .nav {
   display: flex;
-  justify-content: center;
+  justify-content: flex-start;
   gap: 0.25rem;
   margin-top: 1rem;
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
-  padding: 0 0.5rem;
+  padding: 0 1rem;
+  margin-left: auto;
+  margin-right: auto;
+  max-width: fit-content;
 }
 
 .nav::-webkit-scrollbar {
