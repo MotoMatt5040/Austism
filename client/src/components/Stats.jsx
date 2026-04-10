@@ -11,7 +11,7 @@ function HourlyChart({ data }) {
       <h3>When Austin Types</h3>
       {hovered !== null && (
         <div className="chart-tooltip">
-          {hovered.hour}:00 UTC — {hovered.count} messages ({((hovered.count / total) * 100).toFixed(1)}%)
+          {hovered.hour}:00 UTC — {((hovered.count / total) * 100).toFixed(1)}%
         </div>
       )}
       <div className="chart-bars">
