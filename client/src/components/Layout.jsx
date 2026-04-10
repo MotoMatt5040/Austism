@@ -16,7 +16,6 @@ export default function Layout() {
         <p className="tagline">every word preserved for posterity (and roasting)</p>
         <nav className="nav">
           <NavLink to="/" end>Wall</NavLink>
-          <NavLink to="/feed">Feed</NavLink>
           <NavLink to="/quote">Quote</NavLink>
           <NavLink to="/stats">Stats</NavLink>
           <NavLink to="/soundboard">Soundboard</NavLink>

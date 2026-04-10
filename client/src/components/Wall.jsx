@@ -92,7 +92,7 @@ export default function Wall() {
             Oldest
           </button>
           <button className={order === 'random' ? 'active' : ''} onClick={() => changeOrder('random')}>
-            Random
+            Feed
           </button>
         </div>
       </div>
