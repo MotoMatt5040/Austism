@@ -3,16 +3,28 @@ import { fetchOverview, fetchHourly, fetchWords } from '../api/client.js';
 
 function HourlyChart({ data }) {
   const max = Math.max(...data.map((d) => d.count), 1);
+  const total = data.reduce((sum, d) => sum + d.count, 0) || 1;
+  const [hovered, setHovered] = useState(null);
+
   return (
     <div className="hourly-chart">
       <h3>When Austin Types</h3>
+      {hovered !== null && (
+        <div className="chart-tooltip">
+          {hovered.hour}:00 UTC — {hovered.count} messages ({((hovered.count / total) * 100).toFixed(1)}%)
+        </div>
+      )}
       <div className="chart-bars">
         {data.map((d) => (
-          <div key={d.hour} className="chart-bar-container">
+          <div
+            key={d.hour}
+            className={`chart-bar-container ${hovered?.hour === d.hour ? 'chart-bar-active' : ''}`}
+            onMouseEnter={() => setHovered(d)}
+            onMouseLeave={() => setHovered(null)}
+          >
             <div
               className="chart-bar"
               style={{ height: `${(d.count / max) * 100}%` }}
-              title={`${d.hour}:00 UTC - ${d.count} messages`}
             />
             <span className="chart-label">{d.hour}</span>
           </div>
@@ -25,34 +37,33 @@ function HourlyChart({ data }) {
 function WordCloud({ words }) {
   if (words.length === 0) return null;
 
-  // Rank-based sizing: top word is biggest, last is smallest
-  // This guarantees good visual spread regardless of count distribution
-  const sorted = [...words].sort((a, b) => b.value - a.value);
-  const ranked = sorted.map((w, i) => ({
-    ...w,
-    t: 1 - i / Math.max(sorted.length - 1, 1),
-  }));
+  const max = Math.max(...words.map((w) => w.value), 1);
+  const min = Math.min(...words.map((w) => w.value), 1);
   // Shuffle for display so it looks like a cloud
-  const shuffled = [...ranked].sort(() => Math.random() - 0.5);
+  const shuffled = [...words].sort(() => Math.random() - 0.5);
 
   return (
     <div className="word-cloud">
       <h3>Austin's Vocabulary</h3>
       <div className="cloud-words">
-        {shuffled.map((w) => (
+        {shuffled.map((w) => {
+          // Direct proportion to max value — 179 count is huge, 11 count is small
+          const t = w.value / max;
+          return (
           <span
             key={w.text}
             className="cloud-word"
             style={{
-              fontSize: `${0.75 + w.t * 2.75}rem`,
-              opacity: 0.4 + w.t * 0.6,
-              fontWeight: w.t > 0.5 ? 700 : 400,
+              fontSize: `${0.5 + t * 3.5}rem`,
+              opacity: 0.3 + t * 0.7,
+              fontWeight: t > 0.3 ? 700 : 400,
             }}
             title={`${w.text}: ${w.value}`}
           >
             {w.text}
           </span>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
