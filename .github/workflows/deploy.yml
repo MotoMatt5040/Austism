@@ -1,0 +1,50 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: self-hosted
+    environment: production
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Write .env file
+        run: |
+          cat <<EOF > /opt/austism/.env
+          DISCORD_TOKEN=${{ secrets.DISCORD_TOKEN }}
+          SKINWALKERS_GENERAL=${{ secrets.SKINWALKERS_GENERAL }}
+          DB_PATH=/opt/austism/data/skin_walkers.db
+          PORT=3001
+          NODE_ENV=production
+          EOF
+
+      - name: Install server dependencies
+        run: cd server && npm ci
+
+      - name: Install client dependencies and build
+        run: cd client && npm ci && npm run build
+
+      - name: Deploy files
+        run: |
+          rsync -a --delete server/src/ /opt/austism/server/src/
+          rsync -a --delete server/node_modules/ /opt/austism/server/node_modules/
+          cp server/package.json /opt/austism/server/
+          rsync -a --delete client/dist/ /opt/austism/client/dist/
+
+      - name: Deploy Caddyfile
+        run: sudo cp Caddyfile /etc/caddy/Caddyfile
+
+      - name: Restart services
+        run: |
+          sudo systemctl restart austism-bot
+          sudo systemctl reload caddy

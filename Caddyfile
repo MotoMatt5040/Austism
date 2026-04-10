@@ -1,0 +1,3 @@
+austinarchive.dev {
+	reverse_proxy localhost:3001
+}
