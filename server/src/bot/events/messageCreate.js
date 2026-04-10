@@ -91,8 +91,8 @@ client.on('messageCreate', async (message) => {
 });
 
 async function backfill(guild) {
-  const oneYearAgo = new Date();
-  oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
+  const cutoff = new Date();
+  cutoff.setFullYear(cutoff.getFullYear() - 4);
   let totalAdded = 0;
 
   const channels = guild.channels.cache.filter(
@@ -113,7 +113,7 @@ async function backfill(guild) {
 
         for (const [, msg] of batch) {
           // Stop if we've gone past a year
-          if (msg.createdAt < oneYearAgo) {
+          if (msg.createdAt < cutoff) {
             done = true;
             break;
           }
