@@ -566,13 +566,38 @@ body {
   margin-bottom: 2rem;
 }
 
-.hourly-chart h3 {
-  text-align: center;
+.hourly-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   margin-bottom: 1rem;
+}
+
+.hourly-header h3 {
   color: var(--text-muted);
   font-size: 0.9rem;
   text-transform: uppercase;
   letter-spacing: 1px;
+}
+
+.range-select {
+  background: var(--bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0.35rem 0.5rem;
+  font-size: 0.8rem;
+  font-family: 'Inter', system-ui, sans-serif;
+  cursor: pointer;
+  outline: none;
+}
+
+.range-select:hover {
+  border-color: var(--accent);
+}
+
+.range-select:focus {
+  border-color: var(--accent);
 }
 
 .chart-tooltip-wrapper {

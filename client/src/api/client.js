@@ -22,8 +22,8 @@ export function fetchOverview() {
   return fetchJSON('/stats/overview');
 }
 
-export function fetchHourly() {
-  return fetchJSON('/stats/hourly');
+export function fetchHourly(range = '') {
+  return fetchJSON(`/stats/hourly${range ? `?range=${range}` : ''}`);
 }
 
 export function fetchWords(limit = 100) {

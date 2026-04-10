@@ -46,7 +46,13 @@ export function getMessageCount() {
   return db.prepare('SELECT COUNT(*) as count FROM messages').get().count;
 }
 
-export function getHourlyDistribution() {
+export function getHourlyDistribution(since = null) {
+  if (since) {
+    return db.prepare(`
+      SELECT CAST(strftime('%H', rec_date) AS INTEGER) as hour, COUNT(*) as count
+      FROM messages WHERE rec_date >= ? GROUP BY hour ORDER BY hour
+    `).all(since);
+  }
   return db.prepare(`
     SELECT CAST(strftime('%H', rec_date) AS INTEGER) as hour, COUNT(*) as count
     FROM messages GROUP BY hour ORDER BY hour

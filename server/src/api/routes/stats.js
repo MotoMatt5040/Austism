@@ -9,9 +9,18 @@ router.get('/overview', (_req, res) => {
   res.json({ ...overview, ...streak });
 });
 
-router.get('/hourly', (_req, res) => {
-  const data = getHourlyDistribution();
-  // Fill in missing hours with 0
+router.get('/hourly', (req, res) => {
+  const ranges = { '1w': 7, '1m': 30, '3m': 90, '6m': 180, '1y': 365 };
+  const range = req.query.range;
+  let since = null;
+
+  if (range && ranges[range]) {
+    const d = new Date();
+    d.setDate(d.getDate() - ranges[range]);
+    since = d.toISOString();
+  }
+
+  const data = getHourlyDistribution(since);
   const filled = Array.from({ length: 24 }, (_, i) => {
     const found = data.find((d) => d.hour === i);
     return { hour: i, count: found ? found.count : 0 };

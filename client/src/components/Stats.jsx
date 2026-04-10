@@ -2,14 +2,25 @@ import { useState, useEffect, useRef } from 'react';
 import { fetchOverview, fetchHourly, fetchWords } from '../api/client.js';
 import { pack, hierarchy } from 'd3-hierarchy';
 
-function HourlyChart({ data }) {
+function HourlyChart({ data, range, onRangeChange }) {
   const max = Math.max(...data.map((d) => d.count), 1);
   const total = data.reduce((sum, d) => sum + d.count, 0) || 1;
   const [hovered, setHovered] = useState(null);
 
   return (
     <div className="hourly-chart">
-      <h3>When Austin Types</h3>
+      <div className="hourly-header">
+        <h3>When Austin Types</h3>
+        <select
+          className="range-select"
+          value={range}
+          onChange={(e) => onRangeChange(e.target.value)}
+        >
+          {RANGE_OPTIONS.map((o) => (
+            <option key={o.value} value={o.value}>{o.label}</option>
+          ))}
+        </select>
+      </div>
       <div className="chart-tooltip-wrapper">
         {hovered !== null && (
           <div className="chart-tooltip">
@@ -101,16 +112,29 @@ function WordBubbles({ words }) {
   );
 }
 
+const RANGE_OPTIONS = [
+  { value: '', label: 'All Time' },
+  { value: '1y', label: '1 Year' },
+  { value: '6m', label: '6 Months' },
+  { value: '3m', label: '3 Months' },
+  { value: '1m', label: '1 Month' },
+  { value: '1w', label: '1 Week' },
+];
+
 export default function Stats() {
   const [overview, setOverview] = useState(null);
   const [hourly, setHourly] = useState([]);
   const [words, setWords] = useState([]);
+  const [range, setRange] = useState('');
 
   useEffect(() => {
     fetchOverview().then(setOverview).catch(console.error);
-    fetchHourly().then(setHourly).catch(console.error);
     fetchWords(80).then(setWords).catch(console.error);
   }, []);
+
+  useEffect(() => {
+    fetchHourly(range).then(setHourly).catch(console.error);
+  }, [range]);
 
   if (!overview) return <div className="loading">Crunching the numbers...</div>;
 
@@ -142,7 +166,9 @@ export default function Stats() {
         </div>
       </div>
 
-      {hourly.length > 0 && <HourlyChart data={hourly} />}
+      {hourly.length > 0 && (
+        <HourlyChart data={hourly} range={range} onRangeChange={setRange} />
+      )}
       {words.length > 0 && <WordBubbles words={words} />}
     </div>
   );
