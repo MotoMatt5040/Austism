@@ -92,11 +92,14 @@ function GenericEmbed({ messageId, channelId, url }) {
   }
 
   // Got a video from the embed (like Tenor GIFs)
-  if (embed?.type === 'video' && embed?.url) {
-    if (IMAGE_EXT.test(embed.url.split('?')[0])) {
-      return <img src={embed.url} alt="" loading="lazy" />;
+  if (embed?.type === 'video') {
+    // Tenor/Giphy GIFs: the thumbnail IS the gif, prefer it
+    if (embed.thumbnail) {
+      return <img src={embed.thumbnail} alt="" loading="lazy" />;
     }
-    return <video src={embed.url} autoPlay loop muted playsInline preload="auto" />;
+    if (embed.url) {
+      return <video src={embed.url} autoPlay loop muted playsInline preload="auto" />;
+    }
   }
 
   // Rich embed with thumbnail/image — show it as a card
