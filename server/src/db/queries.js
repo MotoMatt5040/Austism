@@ -57,7 +57,13 @@ export function getWordFrequencies(limit = 100) {
   ]);
 
   for (const row of rows) {
-    const words = row.content.toLowerCase().replace(/[^a-z0-9'\s]/g, '').split(/\s+/);
+    // Strip URLs and spoiler tags before counting words
+    const cleaned = row.content
+      .replace(/https?:\/\/\S+/g, '')
+      .replace(/\|\|/g, '')
+      .toLowerCase()
+      .replace(/[^a-z0-9'\s]/g, '');
+    const words = cleaned.split(/\s+/);
     for (const word of words) {
       if (word.length > 1 && !stopWords.has(word)) {
         freq[word] = (freq[word] || 0) + 1;

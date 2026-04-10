@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { fetchMessages } from '../api/client.js';
+import MessageContent from './MessageContent.jsx';
 
 export default function Wall() {
   const [messages, setMessages] = useState([]);
@@ -45,7 +46,7 @@ export default function Wall() {
         <div className="message-list">
           {messages.map((msg) => (
             <div key={msg.id} className="message-card">
-              {msg.content && <p className="message-content">{msg.content}</p>}
+              <MessageContent content={msg.content} />
               {msg.attachments?.map((att, i) => (
                 <div key={i} className="message-media">
                   {att.contentType?.startsWith('image/') ? (

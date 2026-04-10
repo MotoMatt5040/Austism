@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { fetchRandomMessage } from '../api/client.js';
+import MessageContent from './MessageContent.jsx';
 
 export default function QuoteGenerator() {
   const [quote, setQuote] = useState(null);
@@ -26,11 +27,9 @@ export default function QuoteGenerator() {
       <div className={`quote-display ${fading ? 'fade-out' : 'fade-in'}`}>
         {quote && (
           <>
-            {quote.content && (
-              <blockquote className="quote-text">
-                "{quote.content}"
-              </blockquote>
-            )}
+            <div className="quote-media-wrap">
+              <MessageContent content={quote.content} />
+            </div>
             {quote.attachments?.map((att, i) => (
               <div key={i} className="quote-media">
                 {att.contentType?.startsWith('image/') ? (
