@@ -9,11 +9,13 @@ function HourlyChart({ data }) {
   return (
     <div className="hourly-chart">
       <h3>When Austin Types</h3>
-      {hovered !== null && (
-        <div className="chart-tooltip">
-          {hovered.hour}:00 UTC — {((hovered.count / total) * 100).toFixed(1)}%
-        </div>
-      )}
+      <div className="chart-tooltip-wrapper">
+        {hovered !== null && (
+          <div className="chart-tooltip">
+            {hovered.hour}:00 UTC — {((hovered.count / total) * 100).toFixed(1)}%
+          </div>
+        )}
+      </div>
       <div className="chart-bars">
         {data.map((d) => (
           <div
