@@ -243,6 +243,11 @@ body {
   font-size: 0.9rem;
 }
 
+.video-unavailable {
+  color: var(--text-muted);
+  font-style: italic;
+}
+
 .message-media {
   margin: 0.5rem 0;
 }

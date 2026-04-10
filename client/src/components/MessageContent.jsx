@@ -1,18 +1,18 @@
 import { useState, useEffect } from 'react';
 import { refreshMessage } from '../api/client.js';
 
-const CDN_REGEX = /(?:\|\|)?(https:\/\/(?:cdn|media)\.discordapp\.(?:com|net)\/attachments\/[^\s|]+)(?:\|\|)?/g;
+const CDN_REGEX = /(?:\|\|)?(https:\/\/(?:cdn|media)\.discordapp\.(?:com|net)\/[^\s|]+)(?:\|\|)?/g;
+const URL_REGEX = /https?:\/\/[^\s]+/g;
 const IMAGE_EXT = /\.(png|jpg|jpeg|gif|webp)/i;
 const VIDEO_EXT = /\.(mp4|mov|webm)/i;
 
 function LazyVideo({ messageId, channelId, fallbackUrl }) {
   const [src, setSrc] = useState(null);
-  const [loading, setLoading] = useState(false);
   const [showPlayer, setShowPlayer] = useState(false);
+  const [error, setError] = useState(false);
 
-  // Eagerly fetch the fresh URL so the video element can grab frame 1
   useEffect(() => {
-    if (!messageId || !channelId) return;
+    if (!messageId || !channelId) { setSrc(fallbackUrl); return; }
     refreshMessage(messageId, channelId)
       .then((data) => {
         const videoEmbed = data.embeds?.find((e) => e.type === 'video');
@@ -22,14 +22,24 @@ function LazyVideo({ messageId, channelId, fallbackUrl }) {
       .catch(() => setSrc(fallbackUrl));
   }, [messageId, channelId, fallbackUrl]);
 
+  if (error) {
+    return <p className="message-content video-unavailable">Video unavailable</p>;
+  }
+
   if (showPlayer && src) {
-    return <video src={src} controls autoPlay preload="auto" />;
+    return <video src={src} controls autoPlay preload="auto" onError={() => setError(true)} />;
   }
 
   return (
     <div className="video-thumbnail" onClick={() => { if (src) setShowPlayer(true); }}>
       {src ? (
-        <video src={src} muted preload="metadata" className="video-poster-vid" />
+        <video
+          src={src}
+          muted
+          preload="metadata"
+          className="video-poster-vid"
+          onError={() => setError(true)}
+        />
       ) : (
         <div className="video-poster-placeholder" />
       )}

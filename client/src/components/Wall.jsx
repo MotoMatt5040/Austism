@@ -73,7 +73,7 @@ export default function Wall() {
       </div>
 
       <div className="message-list">
-        {messages.map((msg) => (
+        {messages.filter((msg) => msg.content || msg.has_attachment).map((msg) => (
           <div key={msg.id} className="message-card">
             <MessageContent content={msg.content} messageId={msg.message_id} channelId={msg.channel_id} thumbnail={msg.thumbnail} />
             {msg.attachments?.map((att, i) => (
