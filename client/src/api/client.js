@@ -33,3 +33,7 @@ export function fetchWords(limit = 100) {
 export function fetchAttachments(messageId, channelId) {
   return fetchJSON(`/messages/${messageId}/attachments?channelId=${channelId}`);
 }
+
+export function refreshMessage(messageId, channelId) {
+  return fetchJSON(`/messages/${messageId}/refresh?channelId=${channelId}`);
+}

@@ -1,14 +1,47 @@
+import { useState } from 'react';
+import { refreshMessage } from '../api/client.js';
+
 const CDN_REGEX = /(?:\|\|)?(https:\/\/(?:cdn|media)\.discordapp\.(?:com|net)\/attachments\/[^\s|]+)(?:\|\|)?/g;
 const IMAGE_EXT = /\.(png|jpg|jpeg|gif|webp)/i;
 const VIDEO_EXT = /\.(mp4|mov|webm)/i;
 
-export default function MessageContent({ content }) {
+function LazyVideo({ messageId, channelId, fallbackUrl }) {
+  const [src, setSrc] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(false);
+
+  async function load() {
+    if (src || loading) return;
+    setLoading(true);
+    try {
+      const data = await refreshMessage(messageId, channelId);
+      // Find a video URL from the refreshed data
+      const videoEmbed = data.embeds?.find((e) => e.type === 'video');
+      const videoAttachment = data.attachments?.find((a) => a.contentType?.startsWith('video/'));
+      setSrc(videoEmbed?.url || videoAttachment?.url || data.content?.replace(/\|\|/g, '') || fallbackUrl);
+    } catch {
+      setError(true);
+      setSrc(fallbackUrl);
+    }
+    setLoading(false);
+  }
+
+  if (!src) {
+    return (
+      <button className="load-video-btn" onClick={load} disabled={loading}>
+        {loading ? 'Loading...' : 'Load Video'}
+      </button>
+    );
+  }
+
+  return <video src={src} controls preload="auto" />;
+}
+
+export default function MessageContent({ content, messageId, channelId }) {
   if (!content) return null;
 
-  // Strip spoiler tags
   const cleaned = content.replace(/\|\|/g, '');
 
-  // Split content into text and media URLs
   const parts = [];
   let lastIndex = 0;
   const urls = [];
@@ -24,7 +57,6 @@ export default function MessageContent({ content }) {
   const after = cleaned.slice(lastIndex);
   if (after.trim()) parts.push({ type: 'text', value: after.trim() });
 
-  // If no URLs found, just render as text
   if (urls.length === 0) {
     return <p className="message-content">{cleaned}</p>;
   }
@@ -46,7 +78,7 @@ export default function MessageContent({ content }) {
         if (VIDEO_EXT.test(cleanUrl)) {
           return (
             <div key={i} className="message-media">
-              <video src={url} controls preload="metadata" />
+              <LazyVideo messageId={messageId} channelId={channelId} fallbackUrl={url} />
             </div>
           );
         }

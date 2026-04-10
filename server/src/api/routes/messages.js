@@ -52,4 +52,31 @@ router.get('/:messageId/attachments', async (req, res) => {
   }
 });
 
+// Re-fetch a message from Discord to get fresh content/URLs
+router.get('/:messageId/refresh', async (req, res) => {
+  const { messageId } = req.params;
+  const channelId = req.query.channelId;
+
+  if (!channelId) return res.status(400).json({ error: 'channelId required' });
+
+  try {
+    const channel = await client.channels.fetch(channelId);
+    const msg = await channel.messages.fetch(messageId);
+    res.json({
+      content: msg.content || null,
+      attachments: msg.attachments.map((a) => ({
+        url: a.url,
+        name: a.name,
+        contentType: a.contentType,
+      })),
+      embeds: msg.embeds.filter((e) => e.video || e.image || e.thumbnail).map((e) => ({
+        url: e.video?.url || e.image?.url || e.thumbnail?.url,
+        type: e.video ? 'video' : 'image',
+      })),
+    });
+  } catch {
+    res.status(404).json({ error: 'Message not found' });
+  }
+});
+
 export default router;

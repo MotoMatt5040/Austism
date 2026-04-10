@@ -46,7 +46,7 @@ export default function Wall() {
         <div className="message-list">
           {messages.map((msg) => (
             <div key={msg.id} className="message-card">
-              <MessageContent content={msg.content} />
+              <MessageContent content={msg.content} messageId={msg.message_id} channelId={msg.channel_id} />
               {msg.attachments?.map((att, i) => (
                 <div key={i} className="message-media">
                   {att.contentType?.startsWith('image/') ? (

@@ -175,6 +175,27 @@ body {
   margin-bottom: 0.5rem;
 }
 
+.load-video-btn {
+  background: var(--surface-hover);
+  border: 1px solid var(--border);
+  color: var(--accent);
+  padding: 0.75rem 1.5rem;
+  border-radius: var(--radius);
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: all 0.2s;
+}
+
+.load-video-btn:hover:not(:disabled) {
+  background: var(--accent-glow);
+  border-color: var(--accent);
+}
+
+.load-video-btn:disabled {
+  opacity: 0.5;
+  cursor: wait;
+}
+
 .message-media {
   margin: 0.5rem 0;
 }
