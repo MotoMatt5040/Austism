@@ -112,8 +112,8 @@ function GenericEmbed({ messageId, channelId, url }) {
     );
   }
 
-  // Fallback: just show the link
-  return <a href={url} target="_blank" rel="noopener noreferrer">{url}</a>;
+  // No embed data — just show the link
+  return <a href={url} target="_blank" rel="noopener noreferrer" className="message-link">{url}</a>;
 }
 
 export default function MessageContent({ content, messageId, channelId }) {

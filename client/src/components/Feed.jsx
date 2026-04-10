@@ -41,7 +41,7 @@ export default function Feed() {
       <p className="feed-subtitle">scroll for random austin moments</p>
 
       <div className="feed-cards">
-        {cards.filter((msg) => msg.content || msg.has_attachment).map((msg, idx) => (
+        {cards.map((msg, idx) => (
           <div key={`${msg.id}-${idx}`} className="feed-card">
             <div className="feed-card-content">
               <MessageContent

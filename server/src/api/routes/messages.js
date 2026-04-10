@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { getMessages, getRandomMessage, getMessageCount, setThumbnail } from '../../db/queries.js';
+import { getMessages, getRandomMessage, getMessageCount, getFilteredMessageCount, setThumbnail } from '../../db/queries.js';
 import client from '../../bot/client.js';
 
 const router = Router();
@@ -10,7 +10,7 @@ router.get('/', (req, res) => {
   const order = ['asc', 'desc', 'random'].includes(req.query.order) ? req.query.order : 'desc';
 
   const messages = getMessages(page, pageSize, order);
-  const total = getMessageCount();
+  const total = getFilteredMessageCount();
 
   res.json({
     messages,
