@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { getMessages, getRandomMessage, getMessageCount } from '../../db/queries.js';
+import { getMessages, getRandomMessage, getMessageCount, setThumbnail } from '../../db/queries.js';
 import client from '../../bot/client.js';
 
 const router = Router();
@@ -76,6 +76,41 @@ router.get('/:messageId/refresh', async (req, res) => {
     });
   } catch {
     res.status(404).json({ error: 'Message not found' });
+  }
+});
+
+// Get or fetch thumbnail for a video message
+router.get('/:messageId/thumbnail', async (req, res) => {
+  const { messageId } = req.params;
+  const channelId = req.query.channelId;
+
+  if (!channelId) return res.json({ thumbnail: null });
+
+  try {
+    const channel = await client.channels.fetch(channelId);
+    const msg = await channel.messages.fetch(messageId);
+
+    // Look for thumbnail in embeds
+    let thumbnail = null;
+    for (const embed of msg.embeds) {
+      if (embed.thumbnail?.proxyURL) {
+        thumbnail = embed.thumbnail.proxyURL;
+        break;
+      }
+      if (embed.image?.proxyURL) {
+        thumbnail = embed.image.proxyURL;
+        break;
+      }
+    }
+
+    // Cache it in the DB
+    if (thumbnail) {
+      setThumbnail(messageId, thumbnail);
+    }
+
+    res.json({ thumbnail });
+  } catch {
+    res.json({ thumbnail: null });
   }
 });
 

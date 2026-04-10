@@ -11,6 +11,10 @@ export function messageExists(messageId) {
   return !!db.prepare('SELECT 1 FROM messages WHERE message_id = ?').get(messageId);
 }
 
+export function setThumbnail(messageId, thumbnail) {
+  return db.prepare('UPDATE messages SET thumbnail = ? WHERE message_id = ?').run(thumbnail, messageId);
+}
+
 export function getMessageById(messageId) {
   return db.prepare('SELECT * FROM messages WHERE message_id = ? LIMIT 1').get(messageId);
 }

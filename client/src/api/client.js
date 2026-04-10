@@ -37,3 +37,7 @@ export function fetchAttachments(messageId, channelId) {
 export function refreshMessage(messageId, channelId) {
   return fetchJSON(`/messages/${messageId}/refresh?channelId=${channelId}`);
 }
+
+export function fetchThumbnail(messageId, channelId) {
+  return fetchJSON(`/messages/${messageId}/thumbnail?channelId=${channelId}`);
+}

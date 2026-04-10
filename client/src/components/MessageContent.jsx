@@ -1,13 +1,21 @@
-import { useState } from 'react';
-import { refreshMessage } from '../api/client.js';
+import { useState, useEffect } from 'react';
+import { refreshMessage, fetchThumbnail } from '../api/client.js';
 
 const CDN_REGEX = /(?:\|\|)?(https:\/\/(?:cdn|media)\.discordapp\.(?:com|net)\/attachments\/[^\s|]+)(?:\|\|)?/g;
 const IMAGE_EXT = /\.(png|jpg|jpeg|gif|webp)/i;
 const VIDEO_EXT = /\.(mp4|mov|webm)/i;
 
-function LazyVideo({ messageId, channelId, fallbackUrl }) {
+function LazyVideo({ messageId, channelId, fallbackUrl, cachedThumbnail }) {
   const [src, setSrc] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [poster, setPoster] = useState(cachedThumbnail || null);
+
+  useEffect(() => {
+    if (poster || !messageId || !channelId) return;
+    fetchThumbnail(messageId, channelId)
+      .then((data) => { if (data.thumbnail) setPoster(data.thumbnail); })
+      .catch(() => {});
+  }, [messageId, channelId, poster]);
 
   async function load() {
     if (src || loading) return;
@@ -26,6 +34,7 @@ function LazyVideo({ messageId, channelId, fallbackUrl }) {
   if (!src) {
     return (
       <div className="video-thumbnail" onClick={load}>
+        {poster && <img src={poster} alt="" className="video-poster" />}
         <div className="video-play-overlay">
           {loading ? (
             <span className="video-loading">Loading...</span>
@@ -42,7 +51,7 @@ function LazyVideo({ messageId, channelId, fallbackUrl }) {
   return <video src={src} controls autoPlay preload="auto" />;
 }
 
-export default function MessageContent({ content, messageId, channelId }) {
+export default function MessageContent({ content, messageId, channelId, thumbnail }) {
   if (!content) return null;
 
   const cleaned = content.replace(/\|\|/g, '');
@@ -83,7 +92,7 @@ export default function MessageContent({ content, messageId, channelId }) {
         if (VIDEO_EXT.test(cleanUrl)) {
           return (
             <div key={i} className="message-media">
-              <LazyVideo messageId={messageId} channelId={channelId} fallbackUrl={url} />
+              <LazyVideo messageId={messageId} channelId={channelId} fallbackUrl={url} cachedThumbnail={thumbnail} />
             </div>
           );
         }

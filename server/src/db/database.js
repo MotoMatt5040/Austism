@@ -35,6 +35,11 @@ try {
   db.exec('ALTER TABLE messages RENAME COLUMN attachment TO has_attachment');
 } catch (e) { /* already renamed or doesn't exist */ }
 
+// Add thumbnail column for video previews
+try {
+  db.exec('ALTER TABLE messages ADD COLUMN thumbnail TEXT');
+} catch (e) { /* column already exists */ }
+
 // Migrate legacy data from tblSkin_Walkers if it exists and messages table is empty
 try {
   const hasLegacy = db.prepare(
