@@ -7,6 +7,10 @@ export function insertMessage(messageId, content, recDate, hasAttachment, embed,
   `).run(messageId, content, recDate, hasAttachment, embed, isEdit, channelId);
 }
 
+export function messageExists(messageId) {
+  return !!db.prepare('SELECT 1 FROM messages WHERE message_id = ?').get(messageId);
+}
+
 export function getMessageById(messageId) {
   return db.prepare('SELECT * FROM messages WHERE message_id = ? LIMIT 1').get(messageId);
 }

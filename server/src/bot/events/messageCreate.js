@@ -1,5 +1,6 @@
+import { ChannelType } from 'discord.js';
 import client from '../client.js';
-import { insertMessage, getRandomMessage } from '../../db/queries.js';
+import { insertMessage, getRandomMessage, messageExists } from '../../db/queries.js';
 import { config } from '../../config.js';
 
 const TARGET_USER = 'sagginswaggin';
@@ -46,9 +47,18 @@ client.on('messageCreate', async (message) => {
 
   const author = message.author.username;
 
-  // Handle !r command from non-Austin users
-  if (message.content === '!r' && author !== TARGET_USER) {
-    await sendRandomMessage(message.channel);
+  // Handle commands from non-Austin users
+  if (message.content.startsWith('!') && author !== TARGET_USER) {
+    if (message.content === '!r') {
+      await sendRandomMessage(message.channel);
+    } else if (message.content === '!backfill') {
+      await message.channel.send('Starting backfill for the past year...');
+      backfill(message.guild).then((count) => {
+        message.channel.send(`Backfill complete. Added ${count} messages.`);
+      }).catch((err) => {
+        message.channel.send(`Backfill failed: ${err.message}`);
+      });
+    }
     await message.delete().catch(() => {});
     return;
   }
@@ -79,5 +89,62 @@ client.on('messageCreate', async (message) => {
     String(message.channel.id),
   );
 });
+
+async function backfill(guild) {
+  const oneYearAgo = new Date();
+  oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
+  let totalAdded = 0;
+
+  const channels = guild.channels.cache.filter(
+    (ch) => ch.type === ChannelType.GuildText
+  );
+
+  for (const [, channel] of channels) {
+    try {
+      let lastId = null;
+      let done = false;
+
+      while (!done) {
+        const options = { limit: 100 };
+        if (lastId) options.before = lastId;
+
+        const batch = await channel.messages.fetch(options);
+        if (batch.size === 0) break;
+
+        for (const [, msg] of batch) {
+          // Stop if we've gone past a year
+          if (msg.createdAt < oneYearAgo) {
+            done = true;
+            break;
+          }
+
+          if (msg.author.username !== TARGET_USER) continue;
+          if (messageExists(String(msg.id))) continue;
+
+          const hasAttachment = msg.attachments.size > 0 ? 1 : 0;
+          const embed = msg.embeds[0]?.url || null;
+
+          insertMessage(
+            String(msg.id),
+            msg.content || null,
+            msg.createdAt.toISOString(),
+            hasAttachment,
+            embed,
+            0,
+            String(channel.id),
+          );
+          totalAdded++;
+        }
+
+        lastId = batch.last()?.id;
+      }
+    } catch (e) {
+      console.warn(`Backfill skipped channel ${channel.name}: ${e.message}`);
+    }
+  }
+
+  console.log(`Backfill complete: ${totalAdded} messages added`);
+  return totalAdded;
+}
 
 export { sendRandomMessage };
