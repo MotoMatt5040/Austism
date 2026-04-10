@@ -57,6 +57,7 @@ function ListView({ messages, loading, hasMore, loaderRef }) {
 function FeedView({ messages, loading, onLoadMore, onDirectionChange }) {
   const containerRef = useRef(null);
   const lastScrollTop = useRef(0);
+  const [activeIdx, setActiveIdx] = useState(0);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -66,13 +67,14 @@ function FeedView({ messages, loading, onLoadMore, onDirectionChange }) {
       const { scrollTop, clientHeight } = container;
       const idx = Math.round(scrollTop / clientHeight);
 
-      // Detect scroll direction
       if (scrollTop < lastScrollTop.current) {
         onDirectionChange('up');
       } else if (scrollTop > lastScrollTop.current) {
         onDirectionChange('down');
       }
       lastScrollTop.current = scrollTop;
+
+      setActiveIdx(idx);
 
       if (idx >= messages.length - 3) {
         onLoadMore();
@@ -82,6 +84,26 @@ function FeedView({ messages, loading, onLoadMore, onDirectionChange }) {
     container.addEventListener('scroll', onScroll, { passive: true });
     return () => container.removeEventListener('scroll', onScroll);
   }, [onLoadMore, onDirectionChange, messages.length]);
+
+  // Pause all videos except the active card, play+unmute the active one
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const cards = container.querySelectorAll('.feed-card');
+    cards.forEach((card, idx) => {
+      const videos = card.querySelectorAll('video');
+      videos.forEach((v) => {
+        if (idx === activeIdx) {
+          v.muted = false;
+          v.play().catch(() => {});
+        } else {
+          v.pause();
+          v.muted = true;
+        }
+      });
+    });
+  }, [activeIdx]);
 
   return (
     <div className="feed-container" ref={containerRef}>
