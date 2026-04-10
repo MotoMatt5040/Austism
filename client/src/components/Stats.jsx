@@ -23,36 +23,36 @@ function HourlyChart({ data }) {
 }
 
 function WordCloud({ words }) {
-  const max = Math.max(...words.map((w) => w.value), 1);
-  const min = Math.min(...words.map((w) => w.value), 1);
-  // Shuffle so it doesn't look sorted
-  const shuffled = [...words].sort(() => Math.random() - 0.5);
-  // Use log scale for better distribution
-  const logMax = Math.log(max + 1);
-  const logMin = Math.log(min + 1);
-  const range = logMax - logMin || 1;
+  if (words.length === 0) return null;
+
+  // Rank-based sizing: top word is biggest, last is smallest
+  // This guarantees good visual spread regardless of count distribution
+  const sorted = [...words].sort((a, b) => b.value - a.value);
+  const ranked = sorted.map((w, i) => ({
+    ...w,
+    t: 1 - i / Math.max(sorted.length - 1, 1),
+  }));
+  // Shuffle for display so it looks like a cloud
+  const shuffled = [...ranked].sort(() => Math.random() - 0.5);
 
   return (
     <div className="word-cloud">
       <h3>Austin's Vocabulary</h3>
       <div className="cloud-words">
-        {shuffled.map((w) => {
-          const t = (Math.log(w.value + 1) - logMin) / range;
-          return (
-            <span
-              key={w.text}
-              className="cloud-word"
-              style={{
-                fontSize: `${0.6 + t * 3}rem`,
-                opacity: 0.35 + t * 0.65,
-                fontWeight: t > 0.6 ? 700 : 400,
-              }}
-              title={`${w.text}: ${w.value}`}
-            >
-              {w.text}
-            </span>
-          );
-        })}
+        {shuffled.map((w) => (
+          <span
+            key={w.text}
+            className="cloud-word"
+            style={{
+              fontSize: `${0.75 + w.t * 2.75}rem`,
+              opacity: 0.4 + w.t * 0.6,
+              fontWeight: w.t > 0.5 ? 700 : 400,
+            }}
+            title={`${w.text}: ${w.value}`}
+          >
+            {w.text}
+          </span>
+        ))}
       </div>
     </div>
   );

@@ -1,54 +1,49 @@
 import { useState, useEffect } from 'react';
-import { refreshMessage, fetchThumbnail } from '../api/client.js';
+import { refreshMessage } from '../api/client.js';
 
 const CDN_REGEX = /(?:\|\|)?(https:\/\/(?:cdn|media)\.discordapp\.(?:com|net)\/attachments\/[^\s|]+)(?:\|\|)?/g;
 const IMAGE_EXT = /\.(png|jpg|jpeg|gif|webp)/i;
 const VIDEO_EXT = /\.(mp4|mov|webm)/i;
 
-function LazyVideo({ messageId, channelId, fallbackUrl, cachedThumbnail }) {
+function LazyVideo({ messageId, channelId, fallbackUrl }) {
   const [src, setSrc] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [poster, setPoster] = useState(cachedThumbnail || null);
+  const [showPlayer, setShowPlayer] = useState(false);
 
+  // Eagerly fetch the fresh URL so the video element can grab frame 1
   useEffect(() => {
-    if (poster || !messageId || !channelId) return;
-    fetchThumbnail(messageId, channelId)
-      .then((data) => { if (data.thumbnail) setPoster(data.thumbnail); })
-      .catch(() => {});
-  }, [messageId, channelId, poster]);
+    if (!messageId || !channelId) return;
+    refreshMessage(messageId, channelId)
+      .then((data) => {
+        const videoEmbed = data.embeds?.find((e) => e.type === 'video');
+        const videoAttachment = data.attachments?.find((a) => a.contentType?.startsWith('video/'));
+        setSrc(videoEmbed?.url || videoAttachment?.url || data.content?.replace(/\|\|/g, '') || fallbackUrl);
+      })
+      .catch(() => setSrc(fallbackUrl));
+  }, [messageId, channelId, fallbackUrl]);
 
-  async function load() {
-    if (src || loading) return;
-    setLoading(true);
-    try {
-      const data = await refreshMessage(messageId, channelId);
-      const videoEmbed = data.embeds?.find((e) => e.type === 'video');
-      const videoAttachment = data.attachments?.find((a) => a.contentType?.startsWith('video/'));
-      setSrc(videoEmbed?.url || videoAttachment?.url || data.content?.replace(/\|\|/g, '') || fallbackUrl);
-    } catch {
-      setSrc(fallbackUrl);
-    }
-    setLoading(false);
+  if (showPlayer && src) {
+    return <video src={src} controls autoPlay preload="auto" />;
   }
 
-  if (!src) {
-    return (
-      <div className="video-thumbnail" onClick={load}>
-        {poster && <img src={poster} alt="" className="video-poster" />}
-        <div className="video-play-overlay">
-          {loading ? (
-            <span className="video-loading">Loading...</span>
-          ) : (
-            <svg className="play-icon" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M8 5v14l11-7z" />
-            </svg>
-          )}
-        </div>
+  return (
+    <div className="video-thumbnail" onClick={() => { if (src) setShowPlayer(true); }}>
+      {src ? (
+        <video src={src} muted preload="metadata" className="video-poster-vid" />
+      ) : (
+        <div className="video-poster-placeholder" />
+      )}
+      <div className="video-play-overlay">
+        {!src ? (
+          <span className="video-loading">Loading...</span>
+        ) : (
+          <svg className="play-icon" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M8 5v14l11-7z" />
+          </svg>
+        )}
       </div>
-    );
-  }
-
-  return <video src={src} controls autoPlay preload="auto" />;
+    </div>
+  );
 }
 
 export default function MessageContent({ content, messageId, channelId, thumbnail }) {
@@ -92,7 +87,7 @@ export default function MessageContent({ content, messageId, channelId, thumbnai
         if (VIDEO_EXT.test(cleanUrl)) {
           return (
             <div key={i} className="message-media">
-              <LazyVideo messageId={messageId} channelId={channelId} fallbackUrl={url} cachedThumbnail={thumbnail} />
+              <LazyVideo messageId={messageId} channelId={channelId} fallbackUrl={url} />
             </div>
           );
         }
