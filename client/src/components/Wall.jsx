@@ -54,21 +54,26 @@ function ListView({ messages, loading, hasMore, loaderRef }) {
   );
 }
 
-function FeedView({ messages, loading, onLoadMore }) {
+function FeedView({ messages, loading, onLoadMore, onDirectionChange }) {
   const containerRef = useRef(null);
-  const [current, setCurrent] = useState(0);
+  const lastScrollTop = useRef(0);
 
-  // Track current card and load more near the end
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
 
     function onScroll() {
-      const cardHeight = container.clientHeight;
-      const idx = Math.round(container.scrollTop / cardHeight);
-      setCurrent(idx);
+      const { scrollTop, clientHeight } = container;
+      const idx = Math.round(scrollTop / clientHeight);
 
-      // Load more when 2 cards from the end
+      // Detect scroll direction
+      if (scrollTop < lastScrollTop.current) {
+        onDirectionChange('up');
+      } else if (scrollTop > lastScrollTop.current) {
+        onDirectionChange('down');
+      }
+      lastScrollTop.current = scrollTop;
+
       if (idx >= messages.length - 3) {
         onLoadMore();
       }
@@ -76,7 +81,7 @@ function FeedView({ messages, loading, onLoadMore }) {
 
     container.addEventListener('scroll', onScroll, { passive: true });
     return () => container.removeEventListener('scroll', onScroll);
-  }, [onLoadMore, messages.length]);
+  }, [onLoadMore, onDirectionChange, messages.length]);
 
   return (
     <div className="feed-container" ref={containerRef}>
@@ -151,6 +156,8 @@ export default function Wall() {
     return () => observer.disconnect();
   }, [hasMore, isFeed, messages.length]);
 
+  const [headerVisible, setHeaderVisible] = useState(true);
+
   const handleFeedLoadMore = useCallback(() => {
     if (loadingRef.current || !hasMore) return;
     setPage((p) => {
@@ -160,10 +167,26 @@ export default function Wall() {
     });
   }, [hasMore, load]);
 
-  // Lock body scroll in feed mode
+  const handleDirectionChange = useCallback((dir) => {
+    setHeaderVisible(dir === 'up');
+  }, []);
+
+  // Lock body scroll and hide page header/footer in feed mode
   useEffect(() => {
-    document.body.style.overflow = isFeed ? 'hidden' : '';
-    return () => { document.body.style.overflow = ''; };
+    if (isFeed) {
+      document.body.style.overflow = 'hidden';
+      document.querySelector('.header')?.classList.add('feed-hidden');
+      document.querySelector('.footer')?.classList.add('feed-hidden');
+    } else {
+      document.body.style.overflow = '';
+      document.querySelector('.header')?.classList.remove('feed-hidden');
+      document.querySelector('.footer')?.classList.remove('feed-hidden');
+    }
+    return () => {
+      document.body.style.overflow = '';
+      document.querySelector('.header')?.classList.remove('feed-hidden');
+      document.querySelector('.footer')?.classList.remove('feed-hidden');
+    };
   }, [isFeed]);
 
   function changeOrder(newOrder) {
@@ -173,7 +196,7 @@ export default function Wall() {
 
   return (
     <div className={isFeed ? 'wall feed-mode' : 'wall'}>
-      <div className="wall-controls">
+      <div className={`wall-controls ${isFeed && !headerVisible ? 'controls-hidden' : ''}`}>
         <h2>Wall of Austin</h2>
         <div className="order-toggle">
           <button className={order === 'desc' ? 'active' : ''} onClick={() => changeOrder('desc')}>Newest</button>
@@ -183,7 +206,7 @@ export default function Wall() {
       </div>
 
       {isFeed ? (
-        <FeedView messages={messages} loading={loading} onLoadMore={handleFeedLoadMore} />
+        <FeedView messages={messages} loading={loading} onLoadMore={handleFeedLoadMore} onDirectionChange={handleDirectionChange} />
       ) : (
         <ListView messages={messages} loading={loading} hasMore={hasMore} loaderRef={loaderRef} />
       )}
