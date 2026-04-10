@@ -35,10 +35,25 @@ async function sendRandomMessage(channel) {
   const msg = getRandomMessage();
   if (!msg) return;
 
-  if (msg.attachment) {
-    await channel.send(msg.attachment);
-  } else if (msg.content) {
-    await channel.send(msg.content);
+  const parts = [];
+
+  if (msg.content) parts.push(msg.content);
+
+  // Fetch fresh attachment URLs if the message had attachments
+  if (msg.has_attachment > 0 && msg.channel_id) {
+    try {
+      const srcChannel = await client.channels.fetch(msg.channel_id);
+      const discordMsg = await srcChannel.messages.fetch(msg.message_id);
+      for (const [, att] of discordMsg.attachments) {
+        parts.push(att.url);
+      }
+    } catch {
+      // message might be deleted, just send content
+    }
+  }
+
+  if (parts.length > 0) {
+    await channel.send(parts.join('\n'));
   }
 }
 
