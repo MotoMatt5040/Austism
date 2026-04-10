@@ -355,30 +355,37 @@ body {
 }
 
 /* ---- Feed Snap Scroll ---- */
-.feed-mode .wall-controls {
-  position: sticky;
-  top: 0;
-  z-index: 10;
+.feed-mode {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
   background: var(--bg);
-  padding-bottom: 1rem;
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+}
+
+.feed-mode .wall-controls {
+  padding: 1rem;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
 }
 
 .feed-snap-container {
+  flex: 1;
+  overflow-y: scroll;
   scroll-snap-type: y mandatory;
-  overflow-y: auto;
-  height: calc(100vh - 160px);
-  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
 }
 
 .feed-snap-card {
   scroll-snap-align: start;
-  min-height: calc(100vh - 160px);
+  height: calc(100vh - 80px);
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
   padding: 2rem 1rem;
-  border-bottom: 1px solid var(--border);
   position: relative;
 }
 
@@ -386,6 +393,8 @@ body {
   max-width: 600px;
   width: 100%;
   text-align: center;
+  overflow-y: auto;
+  max-height: calc(100vh - 160px);
 }
 
 .feed-snap-content .message-content {
@@ -410,13 +419,17 @@ body {
 
 .feed-snap-date {
   position: absolute;
-  bottom: 1.5rem;
+  bottom: 1rem;
   color: var(--text-muted);
   font-size: 0.75rem;
 }
 
 .feed-snap-loader {
-  min-height: 100px;
+  scroll-snap-align: start;
+  height: 100px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   font-style: italic;
   color: var(--text-muted);
 }
