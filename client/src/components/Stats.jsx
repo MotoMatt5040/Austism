@@ -2,25 +2,14 @@ import { useState, useEffect, useRef } from 'react';
 import { fetchOverview, fetchHourly, fetchWords } from '../api/client.js';
 import { pack, hierarchy } from 'd3-hierarchy';
 
-function HourlyChart({ data, range, onRangeChange }) {
+function HourlyChart({ data }) {
   const max = Math.max(...data.map((d) => d.count), 1);
   const total = data.reduce((sum, d) => sum + d.count, 0) || 1;
   const [hovered, setHovered] = useState(null);
 
   return (
     <div className="hourly-chart">
-      <div className="hourly-header">
-        <h3>When Austin Types</h3>
-        <select
-          className="range-select"
-          value={range}
-          onChange={(e) => onRangeChange(e.target.value)}
-        >
-          {RANGE_OPTIONS.map((o) => (
-            <option key={o.value} value={o.value}>{o.label}</option>
-          ))}
-        </select>
-      </div>
+      <h3>When Austin Types</h3>
       <div className="chart-tooltip-wrapper">
         {hovered !== null && (
           <div className="chart-tooltip">
@@ -129,11 +118,11 @@ export default function Stats() {
 
   useEffect(() => {
     fetchOverview().then(setOverview).catch(console.error);
-    fetchWords(80).then(setWords).catch(console.error);
   }, []);
 
   useEffect(() => {
     fetchHourly(range).then(setHourly).catch(console.error);
+    fetchWords(80, range).then(setWords).catch(console.error);
   }, [range]);
 
   if (!overview) return <div className="loading">Crunching the numbers...</div>;
@@ -145,7 +134,18 @@ export default function Stats() {
 
   return (
     <div className="stats-page">
-      <h2>Austin by the Numbers</h2>
+      <div className="stats-header">
+        <h2>Austin by the Numbers</h2>
+        <select
+          className="range-select"
+          value={range}
+          onChange={(e) => setRange(e.target.value)}
+        >
+          {RANGE_OPTIONS.map((o) => (
+            <option key={o.value} value={o.value}>{o.label}</option>
+          ))}
+        </select>
+      </div>
 
       <div className="stat-cards">
         <div className="stat-card">
@@ -166,9 +166,7 @@ export default function Stats() {
         </div>
       </div>
 
-      {hourly.length > 0 && (
-        <HourlyChart data={hourly} range={range} onRangeChange={setRange} />
-      )}
+      {hourly.length > 0 && <HourlyChart data={hourly} />}
       {words.length > 0 && <WordBubbles words={words} />}
     </div>
   );

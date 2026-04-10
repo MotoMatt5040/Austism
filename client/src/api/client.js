@@ -26,8 +26,8 @@ export function fetchHourly(range = '') {
   return fetchJSON(`/stats/hourly${range ? `?range=${range}` : ''}`);
 }
 
-export function fetchWords(limit = 100) {
-  return fetchJSON(`/stats/words?limit=${limit}`);
+export function fetchWords(limit = 100, range = '') {
+  return fetchJSON(`/stats/words?limit=${limit}${range ? `&range=${range}` : ''}`);
 }
 
 export function fetchAttachments(messageId, channelId) {

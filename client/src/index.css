@@ -566,14 +566,20 @@ body {
   margin-bottom: 2rem;
 }
 
-.hourly-header {
+.stats-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 1rem;
+  margin-bottom: 2rem;
 }
 
-.hourly-header h3 {
+.stats-header h2 {
+  margin-bottom: 0;
+}
+
+.hourly-chart h3 {
+  text-align: center;
+  margin-bottom: 1rem;
   color: var(--text-muted);
   font-size: 0.9rem;
   text-transform: uppercase;

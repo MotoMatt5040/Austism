@@ -59,10 +59,10 @@ export function getHourlyDistribution(since = null) {
   `).all();
 }
 
-export function getWordFrequencies(limit = 100) {
-  const rows = db.prepare(
-    "SELECT content FROM messages WHERE content IS NOT NULL AND content != ''"
-  ).all();
+export function getWordFrequencies(limit = 100, since = null) {
+  const rows = since
+    ? db.prepare("SELECT content FROM messages WHERE content IS NOT NULL AND content != '' AND rec_date >= ?").all(since)
+    : db.prepare("SELECT content FROM messages WHERE content IS NOT NULL AND content != ''").all();
 
   const freq = {};
   const stopWords = new Set([

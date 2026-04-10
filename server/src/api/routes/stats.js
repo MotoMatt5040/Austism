@@ -30,7 +30,15 @@ router.get('/hourly', (req, res) => {
 
 router.get('/words', (req, res) => {
   const limit = Math.min(200, Math.max(10, parseInt(req.query.limit) || 100));
-  res.json(getWordFrequencies(limit));
+  const ranges = { '1w': 7, '1m': 30, '3m': 90, '6m': 180, '1y': 365 };
+  const range = req.query.range;
+  let since = null;
+  if (range && ranges[range]) {
+    const d = new Date();
+    d.setDate(d.getDate() - ranges[range]);
+    since = d.toISOString();
+  }
+  res.json(getWordFrequencies(limit, since));
 });
 
 router.get('/streak', (_req, res) => {
