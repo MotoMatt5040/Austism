@@ -354,7 +354,7 @@ body {
   font-style: italic;
 }
 
-/* ---- Feed Snap Scroll ---- */
+/* ---- Feed ---- */
 .feed-mode {
   position: fixed;
   inset: 0;
@@ -362,78 +362,73 @@ body {
   background: var(--bg);
   display: flex;
   flex-direction: column;
-  padding: 0;
 }
 
 .feed-mode .wall-controls {
-  padding: 1rem;
+  padding: 0.75rem 1rem;
   border-bottom: 1px solid var(--border);
   flex-shrink: 0;
 }
 
-.feed-snap-container {
+.feed-container {
   flex: 1;
   overflow-y: scroll;
-  overflow-x: hidden;
   scroll-snap-type: y mandatory;
-  overscroll-behavior: contain;
+  overscroll-behavior-y: contain;
 }
 
-.feed-snap-card {
-  scroll-snap-align: center;
+.feed-card {
+  scroll-snap-align: start;
   scroll-snap-stop: always;
-  height: calc(100dvh - 80px);
+  height: calc(100dvh - 60px);
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  padding: 2rem 1rem;
+  padding: 1.5rem 1rem;
+  border-bottom: 1px solid var(--border);
   position: relative;
 }
 
-.feed-snap-content {
-  max-width: 600px;
+.feed-card-inner {
+  max-width: 500px;
   width: 100%;
   text-align: center;
-  overflow-y: auto;
-  max-height: calc(100vh - 160px);
 }
 
-.feed-snap-content .message-content {
-  font-size: 1.25rem;
+.feed-card-inner .message-content {
+  font-size: 1.2rem;
   line-height: 1.6;
 }
 
-.feed-snap-content .message-media {
+.feed-card-inner .message-media {
   margin: 1rem auto;
   display: flex;
   justify-content: center;
 }
 
-.feed-snap-content .message-media img,
-.feed-snap-content .message-media video {
-  max-height: 60vh;
-}
-
-.feed-snap-content .video-thumbnail {
+.feed-card-inner .message-media img,
+.feed-card-inner .message-media video {
+  max-height: 55vh;
   max-width: 100%;
 }
 
-.feed-snap-date {
+.feed-card-inner .video-thumbnail {
+  max-width: 100%;
+}
+
+.feed-date {
   position: absolute;
   bottom: 1rem;
   color: var(--text-muted);
   font-size: 0.75rem;
 }
 
-.feed-snap-loader {
-  scroll-snap-align: start;
-  height: 100px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+.feed-loading {
   font-style: italic;
   color: var(--text-muted);
+  height: 100px;
+  min-height: 100px;
 }
 
 /* ---- Quote Generator ---- */

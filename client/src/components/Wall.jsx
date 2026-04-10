@@ -27,21 +27,70 @@ function AttachmentLoader({ messageId, channelId }) {
   ));
 }
 
-function MessageCard({ msg, isFeed }) {
+function ListView({ messages, loading, hasMore, loaderRef }) {
   return (
-    <div className={isFeed ? 'feed-snap-card' : 'message-card'}>
-      <div className={isFeed ? 'feed-snap-content' : ''}>
-        <MessageContent content={msg.content} messageId={msg.message_id} channelId={msg.channel_id} autoPlay={isFeed} />
-        {msg.has_attachment > 0 && (
-          <AttachmentLoader messageId={msg.message_id} channelId={msg.channel_id} />
-        )}
+    <>
+      <div className="message-list">
+        {messages.map((msg) => (
+          <div key={msg.id} className="message-card">
+            <MessageContent content={msg.content} messageId={msg.message_id} channelId={msg.channel_id} />
+            {msg.has_attachment > 0 && (
+              <AttachmentLoader messageId={msg.message_id} channelId={msg.channel_id} />
+            )}
+            <span className="message-date">
+              {new Date(msg.rec_date).toLocaleDateString('en-US', {
+                year: 'numeric', month: 'short', day: 'numeric',
+                hour: '2-digit', minute: '2-digit',
+              })}
+            </span>
+          </div>
+        ))}
       </div>
-      <span className={isFeed ? 'feed-snap-date' : 'message-date'}>
-        {new Date(msg.rec_date).toLocaleDateString('en-US', {
-          year: 'numeric', month: 'short', day: 'numeric',
-          hour: '2-digit', minute: '2-digit',
-        })}
-      </span>
+      <div ref={loaderRef} className="scroll-loader">
+        {loading && <span>Loading more...</span>}
+        {!hasMore && messages.length > 0 && <span>That's all of Austin's wisdom.</span>}
+      </div>
+    </>
+  );
+}
+
+function FeedView({ messages, loading, onLoadMore }) {
+  const containerRef = useRef(null);
+
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    function onScroll() {
+      const { scrollTop, scrollHeight, clientHeight } = container;
+      // Load more when within 2 screens of the bottom
+      if (scrollHeight - scrollTop - clientHeight < clientHeight * 2) {
+        onLoadMore();
+      }
+    }
+
+    container.addEventListener('scroll', onScroll, { passive: true });
+    return () => container.removeEventListener('scroll', onScroll);
+  }, [onLoadMore]);
+
+  return (
+    <div className="feed-container" ref={containerRef}>
+      {messages.map((msg, idx) => (
+        <div key={`${msg.id}-${idx}`} className="feed-card">
+          <div className="feed-card-inner">
+            <MessageContent content={msg.content} messageId={msg.message_id} channelId={msg.channel_id} autoPlay />
+            {msg.has_attachment > 0 && (
+              <AttachmentLoader messageId={msg.message_id} channelId={msg.channel_id} />
+            )}
+          </div>
+          <span className="feed-date">
+            {new Date(msg.rec_date).toLocaleDateString('en-US', {
+              year: 'numeric', month: 'short', day: 'numeric',
+            })}
+          </span>
+        </div>
+      ))}
+      {loading && <div className="feed-card feed-loading">Loading...</div>}
     </div>
   );
 }
@@ -53,23 +102,22 @@ export default function Wall() {
   const [order, setOrder] = useState('desc');
   const [loading, setLoading] = useState(false);
   const loaderRef = useRef(null);
+  const loadingRef = useRef(false);
   const isFeed = order === 'random';
 
-  const loadRef = useRef(false);
-
   const load = useCallback(async (pageNum, reset = false) => {
-    if (loadRef.current) return;
-    loadRef.current = true;
+    if (loadingRef.current) return;
+    loadingRef.current = true;
     setLoading(true);
     try {
-      const data = await fetchMessages(pageNum, isFeed ? 1 : 10, order);
+      const data = await fetchMessages(pageNum, isFeed ? 5 : 10, order);
       setMessages((prev) => reset ? data.messages : [...prev, ...data.messages]);
       setHasMore(data.messages.length > 0);
     } catch (e) {
       console.error(e);
     }
     setLoading(false);
-    loadRef.current = false;
+    loadingRef.current = false;
   }, [order, isFeed]);
 
   useEffect(() => {
@@ -79,13 +127,12 @@ export default function Wall() {
     load(1, true);
   }, [order]);
 
-  // For non-feed: standard infinite scroll
-  // For feed: observe last card to load the next one
+  // List view infinite scroll
   useEffect(() => {
-    if (!loaderRef.current) return;
+    if (isFeed || !loaderRef.current) return;
     const observer = new IntersectionObserver(
       (entries) => {
-        if (entries[0].isIntersecting && hasMore && !loadRef.current) {
+        if (entries[0].isIntersecting && hasMore && !loadingRef.current) {
           setPage((p) => {
             const next = p + 1;
             load(next);
@@ -93,19 +140,24 @@ export default function Wall() {
           });
         }
       },
-      { threshold: 0.5 }
+      { threshold: 0.1 }
     );
     observer.observe(loaderRef.current);
     return () => observer.disconnect();
-  }, [hasMore, messages.length]);
+  }, [hasMore, isFeed, messages.length]);
+
+  const handleFeedLoadMore = useCallback(() => {
+    if (loadingRef.current || !hasMore) return;
+    setPage((p) => {
+      const next = p + 1;
+      load(next);
+      return next;
+    });
+  }, [hasMore, load]);
 
   // Lock body scroll in feed mode
   useEffect(() => {
-    if (isFeed) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = '';
-    }
+    document.body.style.overflow = isFeed ? 'hidden' : '';
     return () => { document.body.style.overflow = ''; };
   }, [isFeed]);
 
@@ -119,41 +171,16 @@ export default function Wall() {
       <div className="wall-controls">
         <h2>Wall of Austin</h2>
         <div className="order-toggle">
-          <button className={order === 'desc' ? 'active' : ''} onClick={() => changeOrder('desc')}>
-            Newest
-          </button>
-          <button className={order === 'asc' ? 'active' : ''} onClick={() => changeOrder('asc')}>
-            Oldest
-          </button>
-          <button className={order === 'random' ? 'active' : ''} onClick={() => changeOrder('random')}>
-            Feed
-          </button>
+          <button className={order === 'desc' ? 'active' : ''} onClick={() => changeOrder('desc')}>Newest</button>
+          <button className={order === 'asc' ? 'active' : ''} onClick={() => changeOrder('asc')}>Oldest</button>
+          <button className={order === 'random' ? 'active' : ''} onClick={() => changeOrder('random')}>Feed</button>
         </div>
       </div>
 
       {isFeed ? (
-        <div className="feed-snap-container">
-          {messages.map((msg, idx) => (
-            <div
-              key={`${msg.id}-${idx}`}
-              ref={idx === messages.length - 1 ? loaderRef : null}
-            >
-              <MessageCard msg={msg} isFeed />
-            </div>
-          ))}
-        </div>
+        <FeedView messages={messages} loading={loading} onLoadMore={handleFeedLoadMore} />
       ) : (
-        <>
-          <div className="message-list">
-            {messages.map((msg) => (
-              <MessageCard key={msg.id} msg={msg} isFeed={false} />
-            ))}
-          </div>
-          <div ref={loaderRef} className="scroll-loader">
-            {loading && <span>Loading more...</span>}
-            {!hasMore && messages.length > 0 && <span>That's all of Austin's wisdom.</span>}
-          </div>
-        </>
+        <ListView messages={messages} loading={loading} hasMore={hasMore} loaderRef={loaderRef} />
       )}
     </div>
   );
