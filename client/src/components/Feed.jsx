@@ -1,6 +1,31 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { fetchMessages } from '../api/client.js';
+import { fetchMessages, fetchAttachments } from '../api/client.js';
 import MessageContent from './MessageContent.jsx';
+
+function AttachmentLoader({ messageId, channelId }) {
+  const [attachments, setAttachments] = useState([]);
+
+  useEffect(() => {
+    if (!messageId || !channelId) return;
+    fetchAttachments(messageId, channelId)
+      .then(setAttachments)
+      .catch(() => {});
+  }, [messageId, channelId]);
+
+  if (attachments.length === 0) return null;
+
+  return attachments.map((att, i) => (
+    <div key={i} className="message-media">
+      {att.contentType?.startsWith('image/') ? (
+        <img src={att.url} alt={att.name} loading="lazy" />
+      ) : att.contentType?.startsWith('video/') ? (
+        <video src={att.url} controls preload="metadata" />
+      ) : (
+        <a href={att.url} target="_blank" rel="noopener noreferrer">{att.name}</a>
+      )}
+    </div>
+  ));
+}
 
 export default function Feed() {
   const [cards, setCards] = useState([]);
@@ -48,8 +73,10 @@ export default function Feed() {
                 content={msg.content}
                 messageId={msg.message_id}
                 channelId={msg.channel_id}
-                thumbnail={msg.thumbnail}
               />
+              {msg.has_attachment > 0 && (
+                <AttachmentLoader messageId={msg.message_id} channelId={msg.channel_id} />
+              )}
             </div>
             <span className="feed-card-date">
               {new Date(msg.rec_date).toLocaleDateString('en-US', {

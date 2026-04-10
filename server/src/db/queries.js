@@ -26,7 +26,7 @@ export function getRandomMessage() {
 }
 
 export function getMessages(page = 1, pageSize = 50, order = 'desc') {
-  const where = "WHERE (content IS NOT NULL AND TRIM(content) != '') OR has_attachment = 1";
+  const where = "WHERE (content IS NOT NULL AND TRIM(content) != '') OR has_attachment > 0";
   const offset = (page - 1) * pageSize;
   if (order === 'random') {
     return db.prepare(`SELECT * FROM messages ${where} ORDER BY RANDOM() LIMIT ?`).all(pageSize);
@@ -38,7 +38,7 @@ export function getMessages(page = 1, pageSize = 50, order = 'desc') {
 
 export function getFilteredMessageCount() {
   return db.prepare(
-    "SELECT COUNT(*) as count FROM messages WHERE (content IS NOT NULL AND TRIM(content) != '') OR has_attachment = 1"
+    "SELECT COUNT(*) as count FROM messages WHERE (content IS NOT NULL AND TRIM(content) != '') OR has_attachment > 0"
   ).get().count;
 }
 

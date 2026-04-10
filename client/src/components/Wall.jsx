@@ -1,6 +1,31 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { fetchMessages } from '../api/client.js';
+import { fetchMessages, fetchAttachments } from '../api/client.js';
 import MessageContent from './MessageContent.jsx';
+
+function AttachmentLoader({ messageId, channelId }) {
+  const [attachments, setAttachments] = useState([]);
+
+  useEffect(() => {
+    if (!messageId || !channelId) return;
+    fetchAttachments(messageId, channelId)
+      .then(setAttachments)
+      .catch(() => {});
+  }, [messageId, channelId]);
+
+  if (attachments.length === 0) return null;
+
+  return attachments.map((att, i) => (
+    <div key={i} className="message-media">
+      {att.contentType?.startsWith('image/') ? (
+        <img src={att.url} alt={att.name} loading="lazy" />
+      ) : att.contentType?.startsWith('video/') ? (
+        <video src={att.url} controls preload="metadata" />
+      ) : (
+        <a href={att.url} target="_blank" rel="noopener noreferrer">{att.name}</a>
+      )}
+    </div>
+  ));
+}
 
 export default function Wall() {
   const [messages, setMessages] = useState([]);
@@ -75,18 +100,10 @@ export default function Wall() {
       <div className="message-list">
         {messages.map((msg) => (
           <div key={msg.id} className="message-card">
-            <MessageContent content={msg.content} messageId={msg.message_id} channelId={msg.channel_id}  />
-            {msg.attachments?.map((att, i) => (
-              <div key={i} className="message-media">
-                {att.contentType?.startsWith('image/') ? (
-                  <img src={att.url} alt={att.name} loading="lazy" />
-                ) : att.contentType?.startsWith('video/') ? (
-                  <video src={att.url} controls preload="metadata" />
-                ) : (
-                  <a href={att.url} target="_blank" rel="noopener noreferrer">{att.name}</a>
-                )}
-              </div>
-            ))}
+            <MessageContent content={msg.content} messageId={msg.message_id} channelId={msg.channel_id} />
+            {msg.has_attachment > 0 && (
+              <AttachmentLoader messageId={msg.message_id} channelId={msg.channel_id} />
+            )}
             <span className="message-date">
               {new Date(msg.rec_date).toLocaleDateString('en-US', {
                 year: 'numeric', month: 'short', day: 'numeric',
