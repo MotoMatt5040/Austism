@@ -29,10 +29,10 @@ jobs:
           EOF
 
       - name: Install server dependencies
-        run: cd server && npm ci
+        run: cd server && npm install
 
       - name: Install client dependencies and build
-        run: cd client && npm ci && npm run build
+        run: cd client && npm install && npm run build
 
       - name: Deploy files
         run: |
