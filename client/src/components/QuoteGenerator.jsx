@@ -28,7 +28,7 @@ export default function QuoteGenerator() {
         {quote && (
           <>
             <div className="quote-media-wrap">
-              <MessageContent content={quote.content} messageId={quote.message_id} channelId={quote.channel_id} thumbnail={quote.thumbnail} />
+              <MessageContent content={quote.content} messageId={quote.message_id} channelId={quote.channel_id} />
             </div>
             {quote.attachments?.map((att, i) => (
               <div key={i} className="quote-media">

@@ -1,12 +1,11 @@
 import { useState, useEffect } from 'react';
 import { refreshMessage } from '../api/client.js';
 
-const CDN_REGEX = /(?:\|\|)?(https:\/\/(?:cdn|media)\.discordapp\.(?:com|net)\/[^\s|]+)(?:\|\|)?/g;
-const EMBED_URL_REGEX = /https:\/\/(?:tenor\.com|giphy\.com|gfycat\.com)\/\S+/;
-const YOUTUBE_REGEX = /https:\/\/(?:www\.)?(?:youtube\.com\/(?:watch\?v=|shorts\/)|youtu\.be\/)([\w-]+)/;
+const URL_REGEX = /(?:\|\|)?(https?:\/\/[^\s|]+)(?:\|\|)?/g;
 const IMAGE_EXT = /\.(png|jpg|jpeg|gif|webp)/i;
 const VIDEO_EXT = /\.(mp4|mov|webm)/i;
-const ALL_MEDIA_REGEX = /(?:\|\|)?(https:\/\/(?:(?:cdn|media)\.discordapp\.(?:com|net)|tenor\.com|giphy\.com|gfycat\.com|(?:www\.)?youtube\.com|youtu\.be)\/[^\s|]+)(?:\|\|)?/g;
+const YOUTUBE_REGEX = /https:\/\/(?:www\.)?(?:youtube\.com\/(?:watch\?v=|shorts\/)|youtu\.be\/)([\w-]+)/;
+const DISCORD_CDN = /(?:cdn|media)\.discordapp\.(com|net)/;
 
 function LazyVideo({ messageId, channelId, fallbackUrl }) {
   const [src, setSrc] = useState(null);
@@ -52,42 +51,13 @@ function LazyVideo({ messageId, channelId, fallbackUrl }) {
   );
 }
 
-function EmbedMedia({ messageId, channelId, url }) {
-  const [src, setSrc] = useState(null);
-  const [error, setError] = useState(false);
-
-  useEffect(() => {
-    if (!messageId || !channelId) return;
-    refreshMessage(messageId, channelId)
-      .then((data) => {
-        const imageEmbed = data.embeds?.find((e) => e.type === 'image');
-        const videoEmbed = data.embeds?.find((e) => e.type === 'video');
-        setSrc(imageEmbed?.url || videoEmbed?.url || null);
-      })
-      .catch(() => setError(true));
-  }, [messageId, channelId]);
-
-  if (error || (!src && !url)) return null;
-
-  if (src) {
-    // Check if it's a gif/image or video
-    if (VIDEO_EXT.test(src.split('?')[0])) {
-      return <video src={src} autoPlay loop muted playsInline preload="auto" />;
-    }
-    return <img src={src} alt="" loading="lazy" />;
-  }
-
-  return <span className="video-loading">Loading GIF...</span>;
-}
-
 function YouTubeEmbed({ url }) {
   const match = url.match(YOUTUBE_REGEX);
   if (!match) return <a href={url} target="_blank" rel="noopener noreferrer">{url}</a>;
-  const videoId = match[1];
   return (
     <iframe
       className="youtube-embed"
-      src={`https://www.youtube-nocookie.com/embed/${videoId}`}
+      src={`https://www.youtube-nocookie.com/embed/${match[1]}`}
       title="YouTube video"
       frameBorder="0"
       allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
@@ -96,7 +66,57 @@ function YouTubeEmbed({ url }) {
   );
 }
 
-export default function MessageContent({ content, messageId, channelId, thumbnail }) {
+function GenericEmbed({ messageId, channelId, url }) {
+  const [embed, setEmbed] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!messageId || !channelId) { setLoading(false); return; }
+    refreshMessage(messageId, channelId)
+      .then((data) => {
+        // Find the best embed to display
+        const imageEmbed = data.embeds?.find((e) => e.type === 'image');
+        const videoEmbed = data.embeds?.find((e) => e.type === 'video');
+        const richEmbed = data.embeds?.[0];
+        setEmbed(imageEmbed || videoEmbed || richEmbed || null);
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, [messageId, channelId]);
+
+  if (loading) return <span className="video-loading">Loading...</span>;
+
+  // Got an image from the embed
+  if (embed?.type === 'image' && embed?.url) {
+    return <img src={embed.url} alt="" loading="lazy" />;
+  }
+
+  // Got a video from the embed (like Tenor GIFs)
+  if (embed?.type === 'video' && embed?.url) {
+    if (IMAGE_EXT.test(embed.url.split('?')[0])) {
+      return <img src={embed.url} alt="" loading="lazy" />;
+    }
+    return <video src={embed.url} autoPlay loop muted playsInline preload="auto" />;
+  }
+
+  // Rich embed with thumbnail/image — show it as a card
+  if (embed?.thumbnail || embed?.title) {
+    return (
+      <a href={url} target="_blank" rel="noopener noreferrer" className="rich-embed">
+        {embed.thumbnail && <img src={embed.thumbnail} alt="" className="rich-embed-thumb" />}
+        <div className="rich-embed-info">
+          {embed.title && <span className="rich-embed-title">{embed.title}</span>}
+          {embed.description && <span className="rich-embed-desc">{embed.description}</span>}
+        </div>
+      </a>
+    );
+  }
+
+  // Fallback: just show the link
+  return <a href={url} target="_blank" rel="noopener noreferrer">{url}</a>;
+}
+
+export default function MessageContent({ content, messageId, channelId }) {
   if (!content) return null;
 
   const cleaned = content.replace(/\|\|/g, '');
@@ -105,7 +125,7 @@ export default function MessageContent({ content, messageId, channelId, thumbnai
   let lastIndex = 0;
   const mediaItems = [];
 
-  for (const match of cleaned.matchAll(ALL_MEDIA_REGEX)) {
+  for (const match of cleaned.matchAll(URL_REGEX)) {
     const url = (match[1] || match[0]).replace(/\|\|/g, '');
     const before = cleaned.slice(lastIndex, match.index);
     if (before.trim()) parts.push({ type: 'text', value: before.trim() });
@@ -128,7 +148,7 @@ export default function MessageContent({ content, messageId, channelId, thumbnai
       {mediaItems.map((url, i) => {
         const cleanUrl = url.split('?')[0];
 
-        // Discord CDN images
+        // Direct image links (Discord CDN or any URL ending in image ext)
         if (IMAGE_EXT.test(cleanUrl)) {
           return (
             <div key={i} className="message-media">
@@ -137,8 +157,8 @@ export default function MessageContent({ content, messageId, channelId, thumbnai
           );
         }
 
-        // Discord CDN videos
-        if (VIDEO_EXT.test(cleanUrl)) {
+        // Direct video links (Discord CDN)
+        if (VIDEO_EXT.test(cleanUrl) && DISCORD_CDN.test(url)) {
           return (
             <div key={i} className="message-media">
               <LazyVideo messageId={messageId} channelId={channelId} fallbackUrl={url} />
@@ -155,18 +175,10 @@ export default function MessageContent({ content, messageId, channelId, thumbnai
           );
         }
 
-        // Tenor/Giphy/Gfycat — fetch the actual GIF from Discord embed
-        if (EMBED_URL_REGEX.test(url)) {
-          return (
-            <div key={i} className="message-media">
-              <EmbedMedia messageId={messageId} channelId={channelId} url={url} />
-            </div>
-          );
-        }
-
+        // Everything else — use Discord embed data to render
         return (
           <div key={i} className="message-media">
-            <a href={url} target="_blank" rel="noopener noreferrer">Attachment</a>
+            <GenericEmbed messageId={messageId} channelId={channelId} url={url} />
           </div>
         );
       })}

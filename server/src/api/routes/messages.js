@@ -69,10 +69,13 @@ router.get('/:messageId/refresh', async (req, res) => {
         name: a.name,
         contentType: a.contentType,
       })),
-      embeds: msg.embeds.filter((e) => e.video || e.image || e.thumbnail).map((e) => ({
-        url: e.video?.url || e.image?.url || e.thumbnail?.url,
-        type: e.video ? 'video' : 'image',
-      })),
+      embeds: msg.embeds.map((e) => ({
+        url: e.video?.url || e.image?.proxyURL || e.image?.url || e.thumbnail?.proxyURL || e.thumbnail?.url || null,
+        thumbnail: e.thumbnail?.proxyURL || e.thumbnail?.url || null,
+        type: e.video ? 'video' : e.image ? 'image' : 'rich',
+        title: e.title || null,
+        description: e.description?.slice(0, 200) || null,
+      })).filter((e) => e.url || e.title),
     });
   } catch {
     res.status(404).json({ error: 'Message not found' });
