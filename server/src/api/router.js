@@ -18,7 +18,6 @@ router.get('/proxy', async (req, res) => {
   // First try fetching directly — works if URL hasn't expired
   try {
     const direct = await fetch(url);
-    console.log('Proxy: direct fetch status', direct.status, url.substring(0, 80));
     if (direct.ok) {
       const contentType = direct.headers.get('content-type');
       if (contentType) res.setHeader('Content-Type', contentType);
@@ -26,23 +25,17 @@ router.get('/proxy', async (req, res) => {
       const buffer = await direct.arrayBuffer();
       return res.send(Buffer.from(buffer));
     }
-  } catch (e) {
-    console.error('Proxy: direct fetch error', e.message);
-  }
+  } catch {}
 
   // URL expired — use Discord's attachment refresh API
   try {
     const baseUrl = url.split('?')[0];
-    console.log('Proxy: refreshing URL', baseUrl);
     const refreshed = await client.rest.post('/attachments/refresh-urls', {
       body: { attachment_urls: [baseUrl] },
     });
-    console.log('Proxy: refresh response', JSON.stringify(refreshed));
     if (refreshed.refreshed_urls?.[0]?.refreshed) {
       const freshUrl = refreshed.refreshed_urls[0].refreshed;
-      console.log('Proxy: fetching fresh URL', freshUrl.substring(0, 80));
       const fresh = await fetch(freshUrl);
-      console.log('Proxy: fresh fetch status', fresh.status);
       if (fresh.ok) {
         const contentType = fresh.headers.get('content-type');
         if (contentType) res.setHeader('Content-Type', contentType);
@@ -51,9 +44,7 @@ router.get('/proxy', async (req, res) => {
         return res.send(Buffer.from(buffer));
       }
     }
-  } catch (e) {
-    console.error('Proxy: refresh failed', e.message);
-  }
+  } catch {}
 
   res.status(404).end();
 });
