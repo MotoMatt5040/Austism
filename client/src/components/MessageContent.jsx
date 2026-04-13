@@ -91,16 +91,17 @@ function GenericEmbed({ messageId, channelId, url }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!messageId || !channelId) { setLoading(false); return; }
+    if (!messageId || !channelId) { console.log('GenericEmbed: no messageId/channelId', { messageId, channelId, url }); setLoading(false); return; }
+    console.log('GenericEmbed: fetching', { messageId, channelId, url });
     refreshMessage(messageId, channelId)
       .then((data) => {
-        // Find the best embed to display
+        console.log('GenericEmbed: got data', { url, embeds: data.embeds, attachments: data.attachments });
         const imageEmbed = data.embeds?.find((e) => e.type === 'image');
         const videoEmbed = data.embeds?.find((e) => e.type === 'video');
         const richEmbed = data.embeds?.[0];
         setEmbed(imageEmbed || videoEmbed || richEmbed || null);
       })
-      .catch(() => {})
+      .catch((e) => { console.error('GenericEmbed: failed', { url, error: e.message }); })
       .finally(() => setLoading(false));
   }, [messageId, channelId]);
 
