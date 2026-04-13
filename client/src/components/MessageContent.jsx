@@ -18,23 +18,43 @@ function LazyVideo({ messageId, channelId, fallbackUrl, autoPlay = false }) {
       .then((data) => {
         const videoEmbed = data.embeds?.find((e) => e.type === 'video');
         const videoAttachment = data.attachments?.find((a) => a.contentType?.startsWith('video/'));
-        setSrc(videoEmbed?.url || videoAttachment?.url || data.content?.replace(/\|\|/g, '') || fallbackUrl);
+        // Extract clean URL from content — strip ALL pipes and grab the URL
+        let contentUrl = null;
+        if (data.content) {
+          const match = data.content.replace(/\|/g, '').match(/https?:\/\/\S+/);
+          contentUrl = match ? match[0] : null;
+        }
+        setSrc(videoEmbed?.url || videoAttachment?.url || contentUrl || fallbackUrl);
       })
       .catch(() => setSrc(fallbackUrl));
   }, [messageId, channelId, fallbackUrl]);
+
+  function proxyUrl(url) {
+    if (!url) return null;
+    return `/api/proxy?url=${encodeURIComponent(url)}`;
+  }
+
+  function handleError() {
+    // Try proxying through our server if direct URL fails
+    if (src && !src.startsWith('/api/proxy')) {
+      setSrc(proxyUrl(src));
+    } else {
+      setError(true);
+    }
+  }
 
   if (error) {
     return <p className="message-content video-unavailable">Video unavailable</p>;
   }
 
   if ((showPlayer || autoPlay) && src) {
-    return <video src={src} controls autoPlay muted loop preload="auto" onError={() => setError(true)} />;
+    return <video src={src} controls autoPlay muted loop preload="auto" onError={handleError} />;
   }
 
   return (
     <div className="video-thumbnail" onClick={() => { if (src) setShowPlayer(true); }}>
       {src ? (
-        <video src={src} muted preload="metadata" className="video-poster-vid" onError={() => setError(true)} />
+        <video src={src} muted preload="metadata" className="video-poster-vid" onError={handleError} />
       ) : (
         <div className="video-poster-placeholder" />
       )}
