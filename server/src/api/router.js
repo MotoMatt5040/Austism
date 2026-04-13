@@ -29,9 +29,12 @@ router.get('/proxy', async (req, res) => {
 
   // URL expired — use Discord's attachment refresh API
   try {
+    const baseUrl = url.split('?')[0];
+    console.log('Proxy: refreshing URL', baseUrl);
     const refreshed = await client.rest.post('/attachments/refresh-urls', {
-      body: { attachment_urls: [url.split('?')[0]] },
+      body: { attachment_urls: [baseUrl] },
     });
+    console.log('Proxy: refresh response', JSON.stringify(refreshed));
     if (refreshed.refreshed_urls?.[0]?.refreshed) {
       const freshUrl = refreshed.refreshed_urls[0].refreshed;
       const fresh = await fetch(freshUrl);
@@ -43,7 +46,9 @@ router.get('/proxy', async (req, res) => {
         return res.send(Buffer.from(buffer));
       }
     }
-  } catch {}
+  } catch (e) {
+    console.error('Proxy: refresh failed', e.message);
+  }
 
   res.status(404).end();
 });
