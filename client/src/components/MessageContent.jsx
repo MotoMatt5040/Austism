@@ -7,6 +7,22 @@ const VIDEO_EXT = /\.(mp4|mov|webm)/i;
 const YOUTUBE_REGEX = /https:\/\/(?:www\.)?(?:youtube\.com\/(?:watch\?v=|shorts\/)|youtu\.be\/)([\w-]+)/;
 const DISCORD_CDN = /(?:cdn|media)\.discordapp\.(com|net)/;
 
+function ProxiedImage({ url }) {
+  const [src, setSrc] = useState(url);
+  const [error, setError] = useState(false);
+
+  function handleError() {
+    if (!src.startsWith('/api/proxy') && DISCORD_CDN.test(url)) {
+      setSrc(`/api/proxy?url=${encodeURIComponent(url)}`);
+    } else {
+      setError(true);
+    }
+  }
+
+  if (error) return null;
+  return <img src={src} alt="" loading="lazy" onError={handleError} />;
+}
+
 function LazyVideo({ messageId, channelId, fallbackUrl, autoPlay = false }) {
   const [src, setSrc] = useState(null);
   const [showPlayer, setShowPlayer] = useState(autoPlay);
@@ -176,7 +192,7 @@ export default function MessageContent({ content, messageId, channelId, autoPlay
         if (IMAGE_EXT.test(cleanUrl)) {
           return (
             <div key={i} className="message-media">
-              <img src={url} alt="" loading="lazy" />
+              <ProxiedImage url={url} />
             </div>
           );
         }
