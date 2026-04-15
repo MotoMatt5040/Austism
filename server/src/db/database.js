@@ -35,6 +35,17 @@ try {
   db.exec('ALTER TABLE messages RENAME COLUMN attachment TO has_attachment');
 } catch (e) { /* already renamed or doesn't exist */ }
 
+// Remove duplicate messages (keep the one with channel_id if possible)
+try {
+  const dupes = db.prepare(`
+    DELETE FROM messages WHERE id NOT IN (
+      SELECT MIN(CASE WHEN channel_id IS NOT NULL THEN id ELSE id + 999999999 END)
+      FROM messages GROUP BY message_id, is_edit
+    )
+  `).run();
+  if (dupes.changes > 0) console.log(`Removed ${dupes.changes} duplicate messages`);
+} catch (e) { console.warn('Dedup skipped:', e.message); }
+
 // Add thumbnail column for video previews
 try {
   db.exec('ALTER TABLE messages ADD COLUMN thumbnail TEXT');

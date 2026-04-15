@@ -3,8 +3,9 @@ import db from './database.js';
 export function insertMessage(messageId, content, recDate, hasAttachment, embed, isEdit = 0, channelId = null) {
   return db.prepare(`
     INSERT INTO messages (message_id, content, rec_date, has_attachment, embed, is_edit, channel_id)
-    VALUES (?, ?, ?, ?, ?, ?, ?)
-  `).run(messageId, content, recDate, hasAttachment, embed, isEdit, channelId);
+    SELECT ?, ?, ?, ?, ?, ?, ?
+    WHERE NOT EXISTS (SELECT 1 FROM messages WHERE message_id = ? AND is_edit = ?)
+  `).run(messageId, content, recDate, hasAttachment, embed, isEdit, channelId, messageId, isEdit);
 }
 
 export function messageExists(messageId) {
