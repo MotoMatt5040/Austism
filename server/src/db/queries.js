@@ -12,6 +12,13 @@ export function messageExists(messageId) {
   return !!db.prepare('SELECT 1 FROM messages WHERE message_id = ?').get(messageId);
 }
 
+export function updateMessage(messageId, content, hasAttachment, embed, channelId) {
+  return db.prepare(`
+    UPDATE messages SET content = ?, has_attachment = ?, embed = ?, channel_id = ?
+    WHERE message_id = ?
+  `).run(content, hasAttachment, embed, channelId, messageId);
+}
+
 export function setThumbnail(messageId, thumbnail) {
   return db.prepare('UPDATE messages SET thumbnail = ? WHERE message_id = ?').run(thumbnail, messageId);
 }

@@ -35,12 +35,19 @@ try {
   db.exec('ALTER TABLE messages RENAME COLUMN attachment TO has_attachment');
 } catch (e) { /* already renamed or doesn't exist */ }
 
-// Remove duplicate messages (keep the one with channel_id if possible)
+// Remove duplicate messages
 try {
+  // Remove is_edit=1 rows where a is_edit=0 row exists for the same message
+  const editDupes = db.prepare(`
+    DELETE FROM messages WHERE is_edit = 1
+    AND message_id IN (SELECT message_id FROM messages WHERE is_edit = 0)
+  `).run();
+  if (editDupes.changes > 0) console.log(`Removed ${editDupes.changes} edit duplicates`);
+
+  // Remove any remaining exact duplicates (keep lowest id)
   const dupes = db.prepare(`
     DELETE FROM messages WHERE id NOT IN (
-      SELECT MIN(CASE WHEN channel_id IS NOT NULL THEN id ELSE id + 999999999 END)
-      FROM messages GROUP BY message_id, is_edit
+      SELECT MIN(id) FROM messages GROUP BY message_id
     )
   `).run();
   if (dupes.changes > 0) console.log(`Removed ${dupes.changes} duplicate messages`);
