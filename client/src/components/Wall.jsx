@@ -14,17 +14,21 @@ function AttachmentLoader({ messageId, channelId }) {
 
   if (attachments.length === 0) return null;
 
-  return attachments.map((att, i) => (
-    <div key={i} className="message-media">
-      {att.contentType?.startsWith('image/') ? (
-        <img src={att.url} alt={att.name} loading="lazy" />
-      ) : att.contentType?.startsWith('video/') ? (
-        <video src={att.url} controls preload="metadata" />
-      ) : (
-        <a href={att.url} target="_blank" rel="noopener noreferrer">{att.name}</a>
-      )}
-    </div>
-  ));
+  return attachments.map((att, i) => {
+    const isImage = att.contentType?.startsWith('image/') || /\.(png|jpg|jpeg|gif|webp)$/i.test(att.name || '');
+    const isVideo = att.contentType?.startsWith('video/') || /\.(mp4|mov|webm)$/i.test(att.name || '');
+    return (
+      <div key={i} className="message-media">
+        {isImage ? (
+          <img src={att.url} alt="" loading="lazy" />
+        ) : isVideo ? (
+          <video src={att.url} controls preload="metadata" />
+        ) : (
+          <a href={att.url} target="_blank" rel="noopener noreferrer">{att.name}</a>
+        )}
+      </div>
+    );
+  });
 }
 
 function ListView({ messages, loading, hasMore, loaderRef }) {
